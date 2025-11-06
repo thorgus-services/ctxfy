@@ -6,7 +6,7 @@ Storytelling: Transforma o conceito abstrato de contexto em ação concreta
 
 # Ctxfy 🧠⚡
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](https://github.com/your-username/ctxfy)
 
