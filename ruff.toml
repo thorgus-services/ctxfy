@@ -1,0 +1,7 @@
+select = ["E", "F", "I", "B", "C4", "T20"]
+ignore = ["E501"]
+line-length = 88
+flake8-quotes.inline-quotes = "double"
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__ for namespace exports
