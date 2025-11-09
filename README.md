@@ -55,7 +55,7 @@ src/
 │       ├── context_sources/
 │       └── external/
 │
-└── cli.py               # Composition root for dependency injection
+└── mcp_server.py        # Main MCP server implementation
 ```
 
 ### MCP Protocol Implementation
@@ -67,15 +67,63 @@ src/
 ## 🛠️ Tech Stack
 
 - **Language**: Python 3.13+
-- **Toolchain**: Poetry (dependency management), Ruff (formatting), MyPy (type checking)
 - **Architecture**: Functional Core, Imperative Shell with Hexagonal Architecture
+- **Toolchain**: Poetry (dependency management), Ruff (formatting), MyPy (type checking)
 - **MCP Protocol**: Model Context Protocol implementation with FastMCP
 - **Context Processing**: Pydantic, LangChain Core for context orchestration
 - **RAG Integration**: LlamaIndex, ChromaDB for dynamic knowledge retrieval
 - **Testing**: Pytest with TDD (Test Driven Development) practices
 - **Observability**: OpenTelemetry, Prometheus for audit and monitoring
 
-## Toolchain Configuration
+## 🏗️ Architecture Principles
+
+This project follows architectural principles defined in [ai-docs/rules](ai-docs/rules/):
+
+### Core Architecture Principles
+- **Hexagonal Architecture**: Application core depends only on abstract ports, and adapters implement them
+- **Port Naming Convention**:
+  - Primary (driving) ports: `*CommandPort`, `*QueryPort` (e.g., `MCPCommandPort`, `ContextQueryPort`)
+  - Secondary (driven) ports: `*GatewayPort`, `*RepositoryPort`, `*PublisherPort` (e.g., `ContextRepositoryPort`)
+
+### Functional Core & Imperative Shell
+- **Core Functions**: Pure functions with no I/O, small size (≤15 lines; ≤3 parameters), named with clear verb + domain object
+- **Shell Functions**: Thin wrappers (≤25 lines) responsible for I/O, error translation, logging, retries
+- **Separation**: Core handles business logic, Shell handles side effects
+
+### Immutable Value Objects
+- All core data classes are immutable using `@dataclass(frozen=True)`
+- Validation occurs in `__post_init__` or dedicated factory methods
+- Type-safe structures preferred over primitive types
+- Transformation methods return new instances instead of mutation
+
+### Orchestrator Pattern
+- Orchestrators contain no business logic, only workflow coordination
+- Maximum 4 dependencies per orchestrator to enforce single responsibility
+- Stateless orchestrators with explicit state passing as parameters
+- Core defines what needs to happen, orchestrators execute how it happens
+
+### Package Architecture
+- Dependencies flow inward: interfaces → application → domain
+- No circular dependencies between packages
+- Recommended structure:
+  ```
+  src/
+  ├── core/                 # Pure domain: context transformation, PRP generation
+  │   ├── models.py         # Immutable context value objects and entities
+  │   ├── use_cases.py      # Pure functions for context operations
+  │   └── ports/            # MCP protocol interfaces only (Protocols)
+  │       ├── mcp_ports.py
+  │       └── context_ports.py
+  ├── shell/               # Imperative shell: MCP communication, file I/O
+  │   ├── orchestrators/   # MCP workflow coordinators with no business logic
+  │   └── adapters/        # MCP protocol implementations
+  │       ├── mcp/
+  │       ├── context_sources/
+  │       └── external/
+  └── mcp_server.py        # Main MCP server implementation
+  ```
+
+## 🛠️ Toolchain Configuration
 
 This project follows the [Python Toolchain Standards](ai-docs/rules/python-toolchain-standards.md) for consistent, secure, and maintainable code.
 
@@ -108,18 +156,32 @@ This project follows the [Python Toolchain Standards](ai-docs/rules/python-toolc
 
 ### Installation
 
+This application is designed to run as an MCP server. For development:
+
 ```bash
-poetry add ctxfy
+git clone https://github.com/your-username/ctxfy.git
+cd ctxfy
+poetry install
+poetry shell
+```
+
+Then run the server with:
+```bash
+python -m src.mcp_server
 ```
 
 ### Quick Start
 
 ```bash
 # Start the MCP server
-ctxfy server --port 8000
+python -m src.mcp_server
 
-# Or integrate with Qwen Code via STDIO transport
-ctxfy mcp --stdio
+# Or using Poetry (recommended for development)
+poetry run python -m src.mcp_server
+
+# The server will start on http://127.0.0.1:8000 by default
+# You can customize the host and port with environment variables:
+# MCP_SERVER_HOST and MCP_SERVER_PORT
 ```
 
 ### Development Setup
@@ -138,6 +200,8 @@ Alternatively with pip:
 2. Activate the virtual environment: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
 3. Install in development mode: `pip install -e .[dev]`
 
+Note: The application currently runs as an MCP server using `python -m src.mcp_server` rather than a CLI tool with subcommands.
+
 ## 🌟 The Ctxfy Flow (MCP-Powered Context Engineering)
 
 1. **Context Stack Generation** → Creates structured context across 5 layers (System, Domain, Task, Interaction, Response)
@@ -152,28 +216,33 @@ Alternatively with pip:
 
 ### Start MCP Server
 ```bash
-ctxfy server --port 8000
+python -m src.mcp_server
 ```
 
-### MCP Integration (STDIO Transport)
-```bash
-ctxfy mcp --stdio  # For integration with Qwen Code or other MCP clients
-```
+### MCP Integration
+The server follows the Model Context Protocol specification and provides:
+- Tool discovery endpoint at `/tools/list`
+- Tool execution endpoint at `/tools/call`
+- Specifically, the `generate_context_stack` tool for context generation
 
 ### Context Operations
-```bash
-ctxfy context generate --story "User authentication feature"  # Generate context stack from requirements
-ctxfy prp create --context-stack path/to/context.json       # Create PRP from context
-ctxfy validate --context-stack path/to/context.json         # Validate context quality
+The server provides the `generate_context_stack` tool that can be called via the MCP protocol:
+```json
+{
+  "name": "generate_context_stack",
+  "arguments": {
+    "feature_description": "User authentication feature",
+    "target_technologies": ["Python", "FastAPI"],
+    "custom_rules": []
+  }
+}
 ```
 
-### Additional Commands
-```bash
-ctxfy --help          # Show all available commands
-ctxfy config          # Manage server configuration
-ctxfy context         # Work with context stacks
-ctxfy server --help   # Show server-specific options
-```
+### Configuration
+The server can be configured via environment variables:
+- `MCP_SERVER_HOST`: Host address (default: 127.0.0.1)
+- `MCP_SERVER_PORT`: Port number (default: 8000)
+- `DEBUG`: Enable debug mode (default: False)
 
 ## 🧪 Testing Strategy
 
@@ -206,7 +275,7 @@ We welcome contributions from the community! Please read our [Code of Conduct](C
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes following our architectural principles
-4. Write tests for your changes using TDD
+4. Write tests for your changes using TDD (≥70% unit tests targeting Functional Core)
 5. Run all tests to ensure MCP protocol compliance: `poetry run pytest`
 6. Commit your changes (`git commit -m 'Add some amazing feature'`)
 7. Push to the branch (`git push origin feature/amazing-feature`)
@@ -220,8 +289,9 @@ When contributing code, please ensure compliance with our architectural principl
 - **MCP Protocol Compliance**: All MCP interactions must follow the Model Context Protocol specification
 - **Immutable Value Objects**: Use `@dataclass(frozen=True)` for all context models
 - **No Infrastructure Dependencies in Core**: Core must not import infrastructure packages
-- **Proper Port Naming**: Follow the naming conventions (MCPCommandPort, MCPQueryPort, etc.)
+- **Proper Port Naming**: Follow the naming conventions (CommandPort, QueryPort, GatewayPort, RepositoryPort)
 - **Security First**: All context sources must be validated before processing
+- **Orchestrator Pattern**: Maximum 4 dependencies per orchestrator, no business logic in shell
 
 ## 📄 License
 
@@ -229,11 +299,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🐛 Issues
 
-If you encounter any issues, please open an issue on our [GitHub Issues](https://github.com/your-username/ctxfy/issues) page. When reporting MCP-related issues, please include:
+If you encounter any issues, please open an issue on our [GitHub Issues](https://github.com/your-username/ctxfy/issues) page. When reporting issues, please include:
 
 - Python version
 - Operating system
-- MCP client version (if applicable)
+- MCP client version (if applicable, e.g., Qwen Code)
 - Steps to reproduce the issue
 - Expected vs actual behavior
 - Any relevant logs or error messages
