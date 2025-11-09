@@ -1,10 +1,13 @@
 {
   "mcpServers": {
     "context-engineering": {
-      "type": "streamable-http",
-      "url": "http://localhost:8000/mcp",
+      "httpUrl": "http://127.0.0.1:8000/mcp",
       "headers": {
-        "Authorization": "Bearer ${CONTEXT_ENGINEERING_API_KEY}"
+        "Content-Type": "application/json"
+      }, 
+      "env": {
+        "PROJECT_ROOT": "${PWD}",
+        "QWEN_CODE_INTEGRATION": "true"
       },
       "timeout": 30000,
       "trust": false,

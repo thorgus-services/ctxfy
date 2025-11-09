@@ -3,25 +3,19 @@
 Example script to demonstrate the MCP Context Stack Generator.
 
 This script shows how to run the MCP server that generates context stacks
-for Qwen Code based on feature descriptions.
+for Qwen Code based on feature descriptions using HTTP transport.
 """
 
-from src.mcp_server import MCPServer
+from src.mcp_server import ContextStackServer
 
 def main():
     print("Starting MCP Context Stack Generator Server...")
-    print("Server will be available at http://127.0.0.1:8000")
-    print("\nAvailable endpoints:")
-    print("  GET  /tools/list  - List available tools")
-    print("  POST /tools/call  - Call a tool")
+    print("Server will be available via HTTP transport")
     print("\nThe server implements the Model Context Protocol (MCP) standard.")
-    print("Available tool: generate_context_stack")
-    print("\nTo test the server, you can use curl:")
-    print("  curl -X POST http://127.0.0.1:8000/tools/call \\")
-    print("    -H 'Content-Type: application/json' \\")
-    print("    -d '{\"name\": \"generate_context_stack\", \"arguments\": {\"feature_description\": \"User authentication system\"}}'")
+    print("Available tools: generate_context_stack, execute_prp_workflow")
+    print("\nThe server uses HTTP transport for production-ready deployments.")
     
-    server = MCPServer()
+    server = ContextStackServer()
     server.run()
 
 if __name__ == "__main__":

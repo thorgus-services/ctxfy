@@ -14,7 +14,7 @@ Ctxfy is an enterprise Context Engineering MCP Server that standardizes and auto
 
 - **Standardized Context Stacks**: 5 structured layers (System, Domain, Task, Interaction, Response Context) ensuring consistent AI interactions
 - **PRP Automation**: Automated generation of Product Requirements Prompts as minimum viable packages for features
-- **MCP Protocol Compliance**: Native integration with LLMs via STDIO transport following Model Context Protocol specification
+- **MCP Protocol Compliance**: Native integration with LLMs via HTTP transport following Model Context Protocol specification
 - **Dynamic RAG Integration**: Real-time updated context with knowledge retrieval capabilities
 - **Enterprise Security**: Security controls with confirmations for critical operations and PII detection
 - **Context Versioning**: Full audit trail and governance for all context modifications
@@ -32,7 +32,7 @@ Ctxfy implements a **Functional Core, Imperative Shell** architecture with MCP P
 ### System Components
 | Layer | Technologies | Responsibilities |
 |-------|--------------|------------------|
-| **MCP Transport Layer** | FastMCP (Python), STDIO/Streamable HTTP | Connection management, protocol encoding/decoding |
+| **MCP Transport Layer** | FastMCP (Python), Streamable HTTP/STDIO | Connection management, protocol encoding/decoding |
 | **Context Orchestration** | Pydantic, LangChain Core | Context stack assembly, validation, compression |
 | **PRP Engine** | Jinja2, YAML, JSON Schema | PRP template execution, resource injection |
 | **Dynamic Context Sources** | LlamaIndex, ChromaDB | RAG integration, knowledge retrieval, caching |
@@ -59,7 +59,7 @@ src/
 ```
 
 ### MCP Protocol Implementation
-- **Transport**: STDIO (primary) with Streamable HTTP support
+- **Transport**: HTTP (primary) with STDIO support
 - **Protocol Version**: 2025-06-18 (latest stable)
 - **Capabilities**: Tools, Resources, Prompts, Elicitation
 - **Lifecycle**: Full JSON-RPC handshake with capability negotiation
@@ -156,14 +156,14 @@ python -m src.mcp_server
 ### Quick Start
 
 ```bash
-# Start the MCP server (uses STDIO transport for MCP protocol)
+# Start the MCP server (uses HTTP transport for MCP protocol)
 python -m src.mcp_server
 
 # Or using Poetry (recommended for development)
 poetry run python -m src.mcp_server
 
-# The server uses STDIO transport by default for MCP protocol communication
-# No HTTP endpoints are exposed - the server communicates directly with MCP clients via STDIO
+# The server uses HTTP transport by default for MCP protocol communication
+# HTTP endpoints are exposed at http://127.0.0.1:8000/mcp for production-ready deployments
 # This is the standard transport mechanism for MCP protocol integration
 ```
 
@@ -184,7 +184,7 @@ Alternatively with pip:
 3. Install in development mode: `pip install -e .[dev]`
 
 Note: The application runs as an MCP server using `python -m src.mcp_server` rather than a CLI tool with subcommands. 
-The server uses FastMCP with STDIO transport to communicate with MCP-enabled clients like Qwen Code.
+The server uses FastMCP with HTTP transport to communicate with MCP-enabled clients like Qwen Code.
 
 ## 🌟 The Ctxfy Flow (MCP-Powered Context Engineering)
 
@@ -200,16 +200,16 @@ The server uses FastMCP with STDIO transport to communicate with MCP-enabled cli
 
 ### Start MCP Server
 ```bash
-# Run the MCP server with FastMCP and STDIO transport
+# Run the MCP server with FastMCP and HTTP transport
 python -m src.mcp_server
 
-# The server will establish STDIO communication with MCP clients
+# The server will establish HTTP communication with MCP clients
 # such as Qwen Code, enabling context stack generation and PRP workflows
 ```
 
 ### MCP Integration
 The server follows the Model Context Protocol specification and provides:
-- STDIO transport for direct MCP client integration
+- HTTP transport for direct MCP client integration
 - Tool discovery and execution via MCP protocol
 - Specifically, the `generate_context_stack` tool for context generation
 
@@ -231,6 +231,28 @@ The server can be configured via environment variables:
 - `DEBUG`: Enable debug mode (default: False)
 - STDIO transport is used by default for MCP protocol communication
 
+### Qwen Code Integration
+To integrate with Qwen Code, create a `qwen-config.json` file in your project root or in the Qwen Code settings directory.
+
+An example of this configuration file is provided in the `examples/` directory.
+
+### Troubleshooting MCP Connection Issues
+
+If your MCP client shows "Disconnected" status, here are common solutions:
+
+1. **Ensure the project root is correctly set**: The `cwd` parameter in the configuration should point to the directory containing the `src/` folder.
+
+2. **Python environment**: Make sure the Python interpreter specified in the `command` parameter can import the `src` module. This usually means running from the project root directory.
+
+3. **Dependencies**: Ensure the `fastmcp` package and other project dependencies are installed in the Python environment that will execute the command.
+
+4. **HTTP Transport Configuration**: Ensure the HTTP server is accessible at the configured endpoint (default: http://127.0.0.1:8000/mcp)
+
+5. **Debug mode**: You can enable debug logging by running with Python's debug flag if needed:
+   ```bash
+   python -d -m src.mcp_server
+   ```
+
 ## 🧪 Testing Strategy
 
 Our testing approach follows TDD (Test-Driven Development) with MCP protocol compliance focus:
@@ -238,11 +260,11 @@ Our testing approach follows TDD (Test-Driven Development) with MCP protocol com
 - **MCP Integration Tests** (≤25%): Test MCP protocol handshake, tool execution, and resource management
 - **End-to-End Tests** (≤5%): Full MCP client-server interaction validation
 
-MCP protocol tests validate full STDIO JSON-RPC communication:
+MCP protocol tests validate full HTTP JSON-RPC communication:
 ```python
 def test_mcp_context_generation_tool():
     # Simulate MCP client requesting context generation
-    # The server handles STDIO-based MCP protocol communication
+    # The server handles HTTP-based MCP protocol communication
     # FastMCP handles the JSON-RPC message format automatically
     response = mcp_server.handle_request(request)
     assert response["result"]["context_stack"] is not None
