@@ -32,10 +32,10 @@ Ctxfy implements a **Functional Core, Imperative Shell** architecture with MCP P
 ### System Components
 | Layer | Technologies | Responsibilities |
 |-------|--------------|------------------|
-| **MCP Transport Layer** | FastMCP (Python), Streamable HTTP | Connection management, protocol encoding/decoding |
+| **MCP Transport Layer** | FastMCP (Python), STDIO/Streamable HTTP | Connection management, protocol encoding/decoding |
 | **Context Orchestration** | Pydantic, LangChain Core | Context stack assembly, validation, compression |
 | **PRP Engine** | Jinja2, YAML, JSON Schema | PRP template execution, resource injection |
-| **Dynamic Context Sources** | LlamaIndex, ChromaDB, FastAPI | RAG integration, knowledge retrieval, caching |
+| **Dynamic Context Sources** | LlamaIndex, ChromaDB | RAG integration, knowledge retrieval, caching |
 | **Audit & Observability** | OpenTelemetry, Prometheus | Context versioning, usage metrics, drift detection |
 
 ### Directory Structure
@@ -59,7 +59,7 @@ src/
 ```
 
 ### MCP Protocol Implementation
-- **Transport**: STDIO (PoC phase) → Streamable HTTP (production)
+- **Transport**: STDIO (primary) with Streamable HTTP support
 - **Protocol Version**: 2025-06-18 (latest stable)
 - **Capabilities**: Tools, Resources, Prompts, Elicitation
 - **Lifecycle**: Full JSON-RPC handshake with capability negotiation
@@ -105,23 +105,6 @@ This project follows architectural principles defined in [ai-docs/rules](ai-docs
 ### Package Architecture
 - Dependencies flow inward: interfaces → application → domain
 - No circular dependencies between packages
-- Recommended structure:
-  ```
-  src/
-  ├── core/                 # Pure domain: context transformation, PRP generation
-  │   ├── models.py         # Immutable context value objects and entities
-  │   ├── use_cases.py      # Pure functions for context operations
-  │   └── ports/            # MCP protocol interfaces only (Protocols)
-  │       ├── mcp_ports.py
-  │       └── context_ports.py
-  ├── shell/               # Imperative shell: MCP communication, file I/O
-  │   ├── orchestrators/   # MCP workflow coordinators with no business logic
-  │   └── adapters/        # MCP protocol implementations
-  │       ├── mcp/
-  │       ├── context_sources/
-  │       └── external/
-  └── mcp_server.py        # Main MCP server implementation
-  ```
 
 ## 🛠️ Toolchain Configuration
 
@@ -173,15 +156,15 @@ python -m src.mcp_server
 ### Quick Start
 
 ```bash
-# Start the MCP server
+# Start the MCP server (uses STDIO transport for MCP protocol)
 python -m src.mcp_server
 
 # Or using Poetry (recommended for development)
 poetry run python -m src.mcp_server
 
-# The server will start on http://127.0.0.1:8000 by default
-# You can customize the host and port with environment variables:
-# MCP_SERVER_HOST and MCP_SERVER_PORT
+# The server uses STDIO transport by default for MCP protocol communication
+# No HTTP endpoints are exposed - the server communicates directly with MCP clients via STDIO
+# This is the standard transport mechanism for MCP protocol integration
 ```
 
 ### Development Setup
@@ -200,7 +183,8 @@ Alternatively with pip:
 2. Activate the virtual environment: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
 3. Install in development mode: `pip install -e .[dev]`
 
-Note: The application currently runs as an MCP server using `python -m src.mcp_server` rather than a CLI tool with subcommands.
+Note: The application runs as an MCP server using `python -m src.mcp_server` rather than a CLI tool with subcommands. 
+The server uses FastMCP with STDIO transport to communicate with MCP-enabled clients like Qwen Code.
 
 ## 🌟 The Ctxfy Flow (MCP-Powered Context Engineering)
 
@@ -216,13 +200,17 @@ Note: The application currently runs as an MCP server using `python -m src.mcp_s
 
 ### Start MCP Server
 ```bash
+# Run the MCP server with FastMCP and STDIO transport
 python -m src.mcp_server
+
+# The server will establish STDIO communication with MCP clients
+# such as Qwen Code, enabling context stack generation and PRP workflows
 ```
 
 ### MCP Integration
 The server follows the Model Context Protocol specification and provides:
-- Tool discovery endpoint at `/tools/list`
-- Tool execution endpoint at `/tools/call`
+- STDIO transport for direct MCP client integration
+- Tool discovery and execution via MCP protocol
 - Specifically, the `generate_context_stack` tool for context generation
 
 ### Context Operations
@@ -232,7 +220,7 @@ The server provides the `generate_context_stack` tool that can be called via the
   "name": "generate_context_stack",
   "arguments": {
     "feature_description": "User authentication feature",
-    "target_technologies": ["Python", "FastAPI"],
+    "target_technologies": ["Python", "MCP"],
     "custom_rules": []
   }
 }
@@ -240,9 +228,8 @@ The server provides the `generate_context_stack` tool that can be called via the
 
 ### Configuration
 The server can be configured via environment variables:
-- `MCP_SERVER_HOST`: Host address (default: 127.0.0.1)
-- `MCP_SERVER_PORT`: Port number (default: 8000)
 - `DEBUG`: Enable debug mode (default: False)
+- STDIO transport is used by default for MCP protocol communication
 
 ## 🧪 Testing Strategy
 
@@ -251,17 +238,12 @@ Our testing approach follows TDD (Test-Driven Development) with MCP protocol com
 - **MCP Integration Tests** (≤25%): Test MCP protocol handshake, tool execution, and resource management
 - **End-to-End Tests** (≤5%): Full MCP client-server interaction validation
 
-MCP protocol tests validate full JSON-RPC communication:
+MCP protocol tests validate full STDIO JSON-RPC communication:
 ```python
 def test_mcp_context_generation_tool():
     # Simulate MCP client requesting context generation
-    request = {
-        "method": "tools/call",
-        "params": {
-            "name": "generate_context_stack",
-            "arguments": {"story": "User authentication feature"}
-        }
-    }
+    # The server handles STDIO-based MCP protocol communication
+    # FastMCP handles the JSON-RPC message format automatically
     response = mcp_server.handle_request(request)
     assert response["result"]["context_stack"] is not None
 ```

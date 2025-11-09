@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "context-engineering": {
+      "type": "streamable-http",
+      "url": "http://localhost:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${CONTEXT_ENGINEERING_API_KEY}"
+      },
+      "timeout": 30000,
+      "trust": false,
+      "includeTools": ["generate_context_stack", "execute_prp_workflow"]
+    }
+  }
+}
