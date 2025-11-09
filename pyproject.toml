@@ -4,15 +4,15 @@ version = "0.1.0"
 description = "CLI tool that transforms business requirements into high-quality code"
 authors = ["Fernando Jr <contato@fernandojr.dev>"]
 packages = [
-    { include = "ctxfy", from = "src" },
+    { include = "src" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.13"
 pydantic-settings = "^2.11"
 sqlalchemy = {version = "^2.0", extras = ["asyncio"]}
-rich = "^14.2.0"
-typer = "^0.20.0"
+fastapi = "^0.121.1"
+uvicorn = {version = "^0.38.0", extras = ["standard"]}
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14"
