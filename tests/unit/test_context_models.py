@@ -1,14 +1,18 @@
 """Unit tests for context models."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
-from src.core.models.context_models import (
-    ContextLayer, ContextStackMetadata, 
-    ContextStack, ContextGenerationRequest,
-    ContextGenerationResponse
-)
+
+import pytest
+
 from src.core.exceptions import ValidationError
+from src.core.models.context_models import (
+    ContextGenerationRequest,
+    ContextGenerationResponse,
+    ContextLayer,
+    ContextStack,
+    ContextStackMetadata,
+)
 
 
 class TestContextLayer:

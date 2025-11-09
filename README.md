@@ -75,6 +75,28 @@ src/
 - **Testing**: Pytest with TDD (Test Driven Development) practices
 - **Observability**: OpenTelemetry, Prometheus for audit and monitoring
 
+## Toolchain Configuration
+
+This project follows the [Python Toolchain Standards](ai-docs/rules/python-toolchain-standards.md) for consistent, secure, and maintainable code.
+
+### Key Tools:
+
+- **Dependency Management**: [Poetry](https://python-poetry.org/)
+- **Code Formatting**: [Ruff](https://github.com/astral-sh/ruff)
+- **Type Checking**: [Mypy](https://mypy.readthedocs.io/)
+- **Security Scanning**: [Bandit](https://bandit.readthedocs.io/), [Safety](https://pypi.org/project/safety/)
+- **Testing**: [Pytest](https://docs.pytest.org/)
+- **Task Automation**: [Tox](https://tox.wiki/)
+- **Configuration**: [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+
+### Configuration Files:
+
+- `pyproject.toml`: Contains Poetry dependencies, Ruff linting rules, Mypy settings, and Bandit configuration.
+- `ruff.toml`: Specific Ruff formatting and linting rules.
+- `mypy.ini`: Mypy type-checking configuration.
+- `pytest.ini`: Pytest settings.
+- `tox.ini`: Tox automation configuration.
+
 ## 🚀 Getting Started
 
 ### Prerequisites

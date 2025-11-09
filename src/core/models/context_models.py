@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional
 from decimal import Decimal
+from typing import Dict, List, Optional
 
 from ..exceptions import ValidationError
 
@@ -16,7 +16,7 @@ class ContextLayer:
     specifications: Dict[str, str] = field(default_factory=dict)
     dependencies: List[str] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate invariants for ContextLayer."""
         if not self.name:
             raise ValidationError("ContextLayer name cannot be empty", "name")
@@ -51,7 +51,7 @@ class ContextStackMetadata:
     domain: str
     task_type: str
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate invariants for ContextStackMetadata."""
         if not self.version:
             raise ValidationError("Metadata version cannot be empty", "version")
@@ -72,7 +72,7 @@ class ContextStack:
     metadata: ContextStackMetadata
     additional_layers: List[ContextLayer] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate invariants for ContextStack."""
         if self.system_layer.name != "system":
             raise ValidationError("System layer name must be 'system'", "system_layer.name")
@@ -108,7 +108,7 @@ class ContextGenerationRequest:
     target_technologies: List[str] = field(default_factory=list)
     custom_rules: List[str] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate invariants for ContextGenerationRequest."""
         if not self.feature_description:
             raise ValidationError("Feature description cannot be empty", "feature_description")
@@ -122,7 +122,7 @@ class ContextGenerationResponse:
     error_message: Optional[str]
     processing_time: Decimal  # in seconds
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate invariants for ContextGenerationResponse."""
         if self.success and not self.context_stack:
             raise ValidationError("Success response must include context stack", "context_stack")

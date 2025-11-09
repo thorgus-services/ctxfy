@@ -1,7 +1,11 @@
 """In-memory adapter for context stack generation."""
 
+from typing import Dict
+
 from ..core.models.context_models import (
-    ContextGenerationRequest, ContextGenerationResponse
+    ContextGenerationRequest,
+    ContextGenerationResponse,
+    ContextStack,
 )
 from ..core.ports.context_stack_ports import ContextStackGenerationCommandPort
 from ..core.use_cases.context_stack_generation import generate_context_stack_functional
@@ -10,9 +14,9 @@ from ..core.use_cases.context_stack_generation import generate_context_stack_fun
 class InMemoryContextGenerationAdapter(ContextStackGenerationCommandPort):
     """In-memory implementation of the context stack generation command port."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         # In a real implementation, this might store generated context stacks
-        self._generated_stacks = {}
+        self._generated_stacks: Dict[str, ContextStack] = {}
     
     def generate_context_stack(self, request: ContextGenerationRequest) -> ContextGenerationResponse:
         """Generate a context stack using the functional core."""

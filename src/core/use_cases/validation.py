@@ -1,8 +1,9 @@
 """Validation utilities for context stack generation."""
 
 from typing import List
+
+from ..exceptions import ValidationError
 from ..models.context_models import ContextGenerationRequest
-from ..exceptions import ValidationError, InvalidFeatureDescriptionError
 
 
 def validate_feature_description(description: str) -> List[str]:

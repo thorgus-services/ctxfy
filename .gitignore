@@ -32,6 +32,10 @@ htmlcov/
 .coverage
 .coverage.*
 
+# Toolchain
+.ruff_cache/
+.tox/
+
 # Mypy
 .mypy_cache/
 .dmypy.json

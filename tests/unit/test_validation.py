@@ -1,12 +1,15 @@
 """Unit tests for context stack validation."""
 
 import pytest
+
+from src.core.exceptions import ValidationError
 from src.core.models.context_models import ContextGenerationRequest
 from src.core.use_cases.validation import (
-    validate_feature_description, validate_target_technologies, 
-    validate_context_generation_request, validate_and_raise
+    validate_and_raise,
+    validate_context_generation_request,
+    validate_feature_description,
+    validate_target_technologies,
 )
-from src.core.exceptions import ValidationError
 
 
 class TestFeatureDescriptionValidation:
@@ -110,7 +113,10 @@ class TestContextGenerationRequestValidation:
     def test_request_with_multiple_validation_errors(self):
         """Test validation of a request with multiple validation errors."""
         # Test validation functions separately since direct object creation would fail
-        from src.core.use_cases.validation import validate_feature_description, validate_target_technologies
+        from src.core.use_cases.validation import (
+            validate_feature_description,
+            validate_target_technologies,
+        )
         
         # Test empty feature description
         feature_errors = validate_feature_description("")
@@ -135,13 +141,6 @@ class TestValidateAndRaise:
         # Should not raise an exception
         validate_and_raise(request)
     
-    def test_validate_and_raise_with_valid_request(self):
-        """Test that validate_and_raise does not raise exception with valid request."""
-        request = ContextGenerationRequest(
-            feature_description="A valid description that is at least 5 chars long",  # Valid for construction
-            target_technologies=["Python", "FastAPI"],
-            custom_rules=[]
-        )
         
         # This should not raise an exception for a valid request
         validate_and_raise(request)

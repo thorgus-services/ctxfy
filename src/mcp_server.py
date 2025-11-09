@@ -1,25 +1,18 @@
 """MCP Server implementation for context stack generation."""
 
-import asyncio
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import uvicorn
 
-from src.settings import settings
-from src.core.models.context_models import (
-    ContextGenerationRequest, ContextGenerationResponse
-)
-from src.core.use_cases.context_stack_generation import (
-    generate_context_stack_functional
-)
-from src.core.use_cases.validation import validate_context_generation_request
-from src.core.ports.context_stack_ports import ContextStackGenerationCommandPort
-from src.shell.orchestrators.context_generation_orchestrator import (
-    ContextGenerationOrchestrator
-)
 from src.adapters.in_memory_context_adapter import InMemoryContextGenerationAdapter
+from src.core.models.context_models import ContextGenerationRequest
+from src.core.ports.context_stack_ports import ContextStackGenerationCommandPort
+from src.settings import settings
+from src.shell.orchestrators.context_generation_orchestrator import (
+    ContextGenerationOrchestrator,
+)
 
 
 class ToolParameter(BaseModel):
@@ -39,7 +32,7 @@ class ToolSchema(BaseModel):
 class MCPServer:
     """MCP Server that implements the tool discovery and execution interface."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.app = FastAPI(title=settings.app_name, version=settings.version)
         self.tools: Dict[str, ToolSchema] = {}
         
@@ -50,10 +43,10 @@ class MCPServer:
         self._register_routes()
         self._register_tools()
     
-    def _register_routes(self):
+    def _register_routes(self) -> None:
         """Register the MCP routes."""
         @self.app.get("/tools/list")
-        async def list_tools():
+        async def list_tools() -> Dict[str, Any]:
             """MCP endpoint for tool discovery."""
             return {
                 "tools": [
@@ -67,7 +60,7 @@ class MCPServer:
             }
         
         @self.app.post("/tools/call")
-        async def call_tool(request: Dict[str, Any]):
+        async def call_tool(request: Dict[str, Any]) -> Dict[str, Any]:
             """MCP endpoint for tool execution."""
             tool_name = request.get("name")
             tool_arguments = request.get("arguments", {})
@@ -84,7 +77,7 @@ class MCPServer:
             
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not implemented")
     
-    def _register_tools(self):
+    def _register_tools(self) -> None:
         """Register available tools with their schemas."""
         self.tools["generate_context_stack"] = ToolSchema(
             name="generate_context_stack",
@@ -113,7 +106,7 @@ class MCPServer:
             }
         )
     
-    async def _execute_generate_context_stack(self, arguments: Dict[str, Any]):
+    async def _execute_generate_context_stack(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the generate_context_stack tool."""
         try:
             # Validate arguments
@@ -194,7 +187,7 @@ class MCPServer:
                 "error": str(e)
             }
     
-    def run(self, host: str = None, port: int = None):
+    def run(self, host: Optional[str] = None, port: Optional[int] = None) -> None:
         """Run the MCP server."""
         host = host or settings.mcp_server_host
         port = port or settings.mcp_server_port

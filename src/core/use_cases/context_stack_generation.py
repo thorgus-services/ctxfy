@@ -1,20 +1,17 @@
 """Functional core for context stack generation logic."""
 
+import time
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List
-import time
+from typing import List
 
 from ..models.context_models import (
-    ContextLayer, ContextStack, ContextStackMetadata, 
-    ContextGenerationRequest, ContextGenerationResponse
+    ContextGenerationRequest,
+    ContextGenerationResponse,
+    ContextLayer,
+    ContextStack,
+    ContextStackMetadata,
 )
-from ..exceptions import (
-    InvalidFeatureDescriptionError, 
-    ContextStackGenerationFailedError,
-    ValidationError
-)
-from .validation import validate_and_raise
 
 
 def generate_context_stack_functional(request: ContextGenerationRequest) -> ContextGenerationResponse:

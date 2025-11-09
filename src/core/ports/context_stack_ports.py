@@ -1,6 +1,7 @@
 """Ports for context stack generation following hexagonal architecture."""
 
 from typing import Protocol
+
 from ..models.context_models import ContextGenerationRequest, ContextGenerationResponse
 
 

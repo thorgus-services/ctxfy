@@ -1,17 +1,14 @@
 """Orchestrator for context stack generation workflow."""
 
-from datetime import datetime
-from decimal import Decimal
-import time
 import logging
+import time
+from decimal import Decimal
 
 from ...core.models.context_models import (
-    ContextGenerationRequest, ContextGenerationResponse
+    ContextGenerationRequest,
+    ContextGenerationResponse,
 )
 from ...core.ports.context_stack_ports import ContextStackGenerationCommandPort
-from ...core.use_cases.context_stack_generation import (
-    generate_context_stack_functional
-)
 from ...core.use_cases.validation import validate_and_raise
 
 

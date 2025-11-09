@@ -1,7 +1,7 @@
 """Settings for the MCP context stack generator."""
 
+
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
