@@ -4,14 +4,9 @@
       "httpUrl": "http://127.0.0.1:8000/mcp",
       "headers": {
         "Content-Type": "application/json"
-      }, 
-      "env": {
-        "PROJECT_ROOT": "${PWD}",
-        "QWEN_CODE_INTEGRATION": "true"
       },
       "timeout": 30000,
-      "trust": false,
-      "includeTools": ["generate_context_stack", "execute_prp_workflow"]
+      "trust": false
     }
   }
 }

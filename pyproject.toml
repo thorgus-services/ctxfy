@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ctxfy"
 version = "0.1.0"
-description = "CLI tool that transforms business requirements into high-quality code"
+description = "MCP that transforms business requirements into high-quality code"
 authors = ["Fernando Jr <contato@fernandojr.dev>"]
 packages = [
     { include = "src" },
@@ -10,13 +10,13 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.13"
 pydantic-settings = "^2.11"
-sqlalchemy = {version = "^2.0", extras = ["asyncio"]}
 fastmcp = "2.13.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14"
 mypy = "^1.18"
 pytest = "^8.4"
+pytest-asyncio = "^0.25.0"
 pytest-cov = "^7.0"
 bandit = "^1.8"
 safety = "^3.7"
@@ -24,7 +24,7 @@ tox = "^4.32.0"
 
 [tool.bandit]
 skips = ["B101"]
-exclude_dirs = ["tests", "venv", ".venv"]
+exclude_dirs = ["tests"]
 
 [build-system]
 requires = ["poetry-core"]
