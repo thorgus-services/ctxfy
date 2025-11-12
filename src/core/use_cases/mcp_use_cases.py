@@ -37,16 +37,16 @@ def process_prompt_request(
 
 
 def create_prompt_response(
-    prompt_id: str,
-    content: str,
+    request_id: str,
+    result: str,
     start_time: datetime,
     llm_model: str
 ) -> PromptResponse:
     """Pure function to create a prompt response with calculated latency.
     
     Args:
-        prompt_id: ID of the prompt
-        content: Response content
+        request_id: ID of the request
+        result: Response result
         start_time: Time when processing started
         llm_model: Model used for processing
         
@@ -57,8 +57,8 @@ def create_prompt_response(
     latency_ms = (end_time - start_time).total_seconds() * 1000
     
     response = PromptResponse(
-        prompt_id=prompt_id,
-        content=content,
+        request_id=request_id,
+        result=result,
         latency_ms=latency_ms,
         llm_model=llm_model
     )

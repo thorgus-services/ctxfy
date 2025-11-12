@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ctxfy-mcp-server:
+    build: .
+    ports:
+      - "${SERVER_PORT:-8000}:${SERVER_PORT:-8000}"
+    environment:
+      - PYTHONPATH=/app/src
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+      - SERVER_HOST=${SERVER_HOST:-0.0.0.0}
+      - SERVER_PORT=${SERVER_PORT:-8000}
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-http}
+    volumes:
+      - ./logs:/app/logs  # Mount logs directory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8000"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    networks:
+      - ctxfy-network
+
+networks:
+  ctxfy-network:
+    driver: bridge

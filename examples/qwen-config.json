@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "context-engineering": {
-      "httpUrl": "http://127.0.0.1:8000/mcp",
+      "httpUrl": "http://127.0.0.1:8000/mcp",  // MCP protocol endpoint
       "headers": {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": "Bearer YOUR_API_KEY_HERE"  // Replace with your actual API key
       },
       "timeout": 30000,
       "trust": false

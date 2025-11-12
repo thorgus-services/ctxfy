@@ -1,0 +1,99 @@
+# Dependencies
+poetry.lock
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.tox/
+.venv/
+env/
+venv/
+
+# Testing
+.coverage
+.htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+
+# Logs
+logs/
+*.log
+
+# Documentation
+docs/_build/
+*.tmp
+
+# Distribution / packaging
+.pybuild/
+.coverage
+.tox/
+.sass-cache/
+node_modules/
+npm-debug.log
+yarn.log
+
+# Environment
+.env
+.venv
+venv/
+ENV
+.envrc
+.flaskenv
+
+# Local configuration
+*.ini
+*.cfg
+*.conf
+config/
+
+# Additional Python artifacts
+*.so
+*.egg
+*.egg-info/
+ MANIFEST
+*.egg-info/
+.installed.cfg
+*.manifest
+*.spec
+
+# Coverage
+.coverage*
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# CI/CD
+.github/
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+.drone.yml
+azure-pipelines.yml
+jenkinsfile
+
+# Docker
+.dockerignore
+Dockerfile*
+
+# Additional
+*Dockerfile
+*docker-compose*
+*.dockerapp
