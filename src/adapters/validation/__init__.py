@@ -4,6 +4,12 @@ from typing import Any, Dict, Optional, Type, Union
 
 from pydantic import BaseModel, ValidationError, create_model
 
+from src.core.models.error_models import (
+    ApplicationError,
+    ErrorCodes,
+    ErrorDetails,
+    ErrorResponse,
+)
 from src.core.models.validation_models import ValidationError as CoreValidationError
 from src.core.models.validation_models import ValidationResult
 from src.core.ports.validation_ports import ValidationPort
@@ -202,7 +208,7 @@ class SchemaValidationAdapter:
         return create_model(model_name, **field_definitions)
 
     @staticmethod
-    def validate_data_with_pydantic(data: Dict[str, Any], model: Type[BaseModel]) -> ValidationResult:
+    def validate_data_with_pydantic(data: Any, model: Type[BaseModel]) -> ValidationResult:
         """Validate data using a Pydantic model.
 
         Args:
@@ -213,6 +219,19 @@ class SchemaValidationAdapter:
             ValidationResult with validation result and any errors
         """
         try:
+            # Type check if data is a dictionary
+            if not isinstance(data, dict):
+                return ValidationResult(
+                    is_valid=False,
+                    errors=(
+                        CoreValidationError(
+                            field="data",
+                            message=f"Expected dictionary but got {type(data).__name__}",
+                            code="invalid_type"
+                        ),
+                    )
+                )
+            
             # Attempt to create model instance which will trigger validation
             model(**data)
 
@@ -238,3 +257,33 @@ class SchemaValidationAdapter:
                 is_valid=False,
                 errors=tuple(errors)
             )
+        except Exception as e:
+            # Handle any other exceptions that might occur during validation
+            return ValidationResult(
+                is_valid=False,
+                errors=(
+                    CoreValidationError(
+                        field="data",
+                        message=f"Validation error: {str(e)}",
+                        code="validation_exception"
+                    ),
+                )
+            )
+
+    @staticmethod
+    def create_structured_error_response(error_code: str, message: str, details: Optional[str] = None, request_id: Optional[str] = None, status_code: int = 400) -> ErrorResponse:
+        """Create a structured error response following our error handling principles."""
+        error = ApplicationError(
+            error_code=error_code,
+            message=message,
+            details=details,
+            request_id=request_id
+        )
+        
+        error_details = (ErrorDetails(description=message, code=error_code),) if message else ()
+        
+        return ErrorResponse(
+            error=error,
+            details=error_details,
+            status_code=status_code
+        )
