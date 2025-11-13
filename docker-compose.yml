@@ -9,8 +9,8 @@ services:
       - PYTHONPATH=/app/src
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DEBUG=${DEBUG:-false}
-      - SERVER_HOST=${SERVER_HOST:-0.0.0.0}
-      - SERVER_PORT=${SERVER_PORT:-8000}
+      - CTXFY_SERVER_HOST=${CTXFY_SERVER_HOST:-0.0.0.0}
+      - CTXFY_SERVER_PORT=${SERVER_PORT:-8000}
       - MCP_TRANSPORT=${MCP_TRANSPORT:-http}
     volumes:
       - ./logs:/app/logs  # Mount logs directory

@@ -1,7 +1,6 @@
 """Main application entry point with dependency injection for the ctxfy MCP Server."""
 
 import asyncio
-import os
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -14,6 +13,7 @@ from src.adapters.auth.middleware import AuthMiddleware
 from src.adapters.monitoring import StructuredLoggingAdapter
 from src.adapters.monitoring.monitoring import MonitoringAdapter
 from src.adapters.validation import SchemaValidationAdapter
+from src.config import settings
 from src.core.models.auth_models import ApiKeyRequest
 from src.core.models.error_models import (
     ApplicationError,
@@ -401,9 +401,9 @@ async def main() -> None:
     """Main entry point for the application."""
     app = MCPServerApp()
 
-    # Get host and port from environment variables with defaults
-    host = os.getenv("SERVER_HOST", "0.0.0.0")  # nosec B104 - Allow binding to all interfaces for Docker; override with env var for production
-    port = int(os.getenv("SERVER_PORT", "8000"))
+    # Get host and port from settings (with environment variable overrides)
+    host = settings.server_host
+    port = settings.server_port
 
     await app.start_server(host=host, port=port)
 
