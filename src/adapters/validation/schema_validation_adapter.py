@@ -125,6 +125,7 @@ class SchemaValidationAdapter(ValidationPort):
             "warnings": []
         }
 
+
     @classmethod
     def validate_prompt_request_cls(cls, data: Dict[str, Any], schema: Optional[Dict[str, Any]] = None) -> ValidationResult:
         """Class method version for testing - returns ValidationResult directly."""

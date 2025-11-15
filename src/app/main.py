@@ -13,15 +13,20 @@ from starlette.responses import JSONResponse, Response
 from src.adapters.api_docs import MCPToolsDocsGenerator, OpenAPIDocGenerator
 from src.adapters.auth import ApiKeyAuthAdapter, InMemoryApiKeyRepository
 from src.adapters.auth.middleware import AuthMiddleware
+from src.adapters.context.filesystem_adapter import FilesystemAdapter
 from src.adapters.monitoring import StructuredLoggingAdapter
 from src.adapters.monitoring.monitoring import MonitoringAdapter
+from src.adapters.security.path_validator import SecurityAdapter
 from src.adapters.validation import SchemaValidationAdapter
 from src.config import settings
 from src.core.models.auth_models import ApiKeyRequest
+from src.core.models.directory_models import DirectoryConfig
 from src.core.models.error_models import (
     ApplicationError,
     ErrorCodes,
 )
+from src.core.use_cases.directory_use_cases import generate_default_readme
+from src.shell.orchestrators.directory_orchestrator import DirectoryOrchestrator
 
 # For type checking compatibility
 if TYPE_CHECKING:
@@ -154,7 +159,6 @@ class MCPServerApp:
                 Output: "Processed: test value"
             """
             # Log the request
-            from datetime import datetime
             start_time = datetime.now()
             request_id = f"req-{id(ctx)}" if ctx else "unknown"
 
@@ -453,11 +457,6 @@ class MCPServerApp:
 
     def _setup_directory_operations(self) -> None:
         """Set up directory operations endpoints."""
-        from src.adapters.context.filesystem_adapter import FilesystemAdapter
-        from src.adapters.security.path_validator import SecurityAdapter
-        from src.core.models.directory_models import DirectoryConfig
-        from src.core.use_cases.directory_use_cases import generate_default_readme
-        from src.shell.orchestrators.directory_orchestrator import DirectoryOrchestrator
 
         async def create_ctxfy_directories(
             ctx: Any,

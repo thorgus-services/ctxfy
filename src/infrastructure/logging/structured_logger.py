@@ -9,10 +9,10 @@ This adapter provides structured JSON logging with required fields:
 import json
 from datetime import datetime
 
-from src.core.ports.mcp_ports import LoggingPort
+from src.core.ports.mcp_ports import MCPLoggingPort
 
 
-class StructuredLogger(LoggingPort):
+class StructuredLogger(MCPLoggingPort):
     """Structured logging adapter with JSON format and required fields."""
     
     def __init__(self, level: str = "INFO"):
@@ -80,27 +80,3 @@ class StructuredLogger(LoggingPort):
         
         print(json.dumps(log_entry))  # noqa: T201
     
-    def log_health_check(
-        self,
-        status: str,
-        uptime_seconds: float
-    ) -> None:
-        """Log a health check with required fields.
-        
-        Args:
-            status: Health status ('healthy', 'degraded', 'unhealthy')
-            uptime_seconds: Uptime in seconds
-        """
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "level": "INFO",
-            "message": f"Health check status: {status}",
-            "prompt_id": "N/A",  # Health check doesn't have a prompt ID
-            "latency_ms": 0,
-            "llm_model": "N/A",
-            "module": "structured_logger",
-            "function": "log_health_check",
-            "uptime_seconds": uptime_seconds
-        }
-        
-        print(json.dumps(log_entry))  # noqa: T201

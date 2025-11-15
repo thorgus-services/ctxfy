@@ -8,20 +8,20 @@ from datetime import datetime
 
 from fastmcp import Context
 
-from src.core.ports.mcp_ports import LLMAdapterPort, LoggingPort
+from src.core.ports.mcp_ports import LLMAdapterPort, MCPLoggingPort
 
 
 class MCPOrchestrator:
     """Orchestrator that coordinates between core use cases and adapters.
-    
+
     This implements the Imperative Shell pattern with no business logic,
     maximum 4 dependencies, and coordinates I/O operations.
     """
-    
+
     def __init__(
         self,
         llm_adapter: LLMAdapterPort,
-        logging_adapter: LoggingPort
+        logging_adapter: MCPLoggingPort
     ):
         """Initialize the orchestrator with required adapters.
         

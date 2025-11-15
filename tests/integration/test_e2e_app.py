@@ -107,13 +107,13 @@ class TestCompleteIntegration:
     def test_all_ports_import_successfully(self):
         """Test that all ports can be imported without errors."""
         from src.core.ports.auth_ports import AuthCommandPort, AuthQueryPort
-        from src.core.ports.mcp_ports import LoggingPort
+        from src.core.ports.mcp_ports import MCPLoggingPort
         from src.core.ports.monitoring_ports import HealthQueryPort, MetricsPort
         from src.core.ports.monitoring_ports import LoggingPort as MonitorLoggingPort
         from src.core.ports.validation_ports import ValidationPort
 
         # Just verify imports work
-        assert LoggingPort is not None
+        assert MCPLoggingPort is not None
         assert AuthCommandPort is not None
         assert AuthQueryPort is not None
         assert MonitorLoggingPort is not None

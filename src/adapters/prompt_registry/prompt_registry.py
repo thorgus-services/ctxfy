@@ -27,22 +27,7 @@ class PromptRegistry:
         """Get all registered prompt templates"""
         with self._lock:
             return list(self._templates.values())
-    
-    def update_template(self, template_id: str, template: PromptTemplate) -> bool:
-        """Update an existing template"""
-        with self._lock:
-            if template_id in self._templates:
-                self._templates[template_id] = template
-                return True
-            return False
-    
-    def remove_template(self, template_id: str) -> bool:
-        """Remove a template"""
-        with self._lock:
-            if template_id in self._templates:
-                del self._templates[template_id]
-                return True
-            return False
+
 
 
 class PromptRegistryAdapter(PromptCommandPort, PromptQueryPort):
@@ -69,3 +54,4 @@ class PromptRegistryAdapter(PromptCommandPort, PromptQueryPort):
     async def get_prompt_template(self, prompt_id: str) -> Optional[PromptTemplate]:
         """Get a specific prompt template by ID"""
         return self._registry.get_template(prompt_id)
+

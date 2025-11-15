@@ -14,11 +14,11 @@ if TYPE_CHECKING:
 
 class MCPServerCommandPort(Protocol):
     """Primary port for MCP server operations - driving port following naming convention."""
-    
+
     async def register_prompt_handler(self, name: str, handler: Callable[..., Awaitable[None]]) -> None:
         """Register a prompt handler with the MCP server."""
         ...
-    
+
     async def start_server(self) -> None:
         """Start the MCP server."""
         ...
@@ -26,7 +26,7 @@ class MCPServerCommandPort(Protocol):
 
 class MCPHealthQueryPort(Protocol):
     """Primary port for health check operations - driving port following naming convention."""
-    
+
     async def get_health_status(self) -> HealthStatus:
         """Get the current health status of the MCP server."""
         ...
@@ -34,7 +34,7 @@ class MCPHealthQueryPort(Protocol):
 
 class LLMAdapterPort(Protocol):
     """Secondary port for LLM operations - driven port following naming convention."""
-    
+
     async def sample_text(self, prompt: str, model: str = "default") -> str:
         """Sample text from an LLM with the provided prompt."""
         ...
@@ -44,14 +44,14 @@ class LLMAdapterPort(Protocol):
         ...
 
 
-class LoggingPort(Protocol):
-    """Secondary port for logging operations - driven port following naming convention."""
-    
+class MCPLoggingPort(Protocol):
+    """Secondary port for MCP-specific logging operations - driven port following naming convention."""
+
     def log_prompt_request(
-        self, 
-        prompt_id: str, 
-        name: str, 
-        latency_ms: float, 
+        self,
+        prompt_id: str,
+        name: str,
+        latency_ms: float,
         llm_model: str
     ) -> None:
         """Log a prompt request with required fields."""
