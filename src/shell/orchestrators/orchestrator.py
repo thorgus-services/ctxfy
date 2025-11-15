@@ -6,7 +6,7 @@ implementing the Imperative Shell part of the Functional Core & Imperative Shell
 
 from datetime import datetime
 
-from fastmcp.server import Context
+from fastmcp import Context
 
 from src.core.ports.mcp_ports import LLMAdapterPort, LoggingPort
 

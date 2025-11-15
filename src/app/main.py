@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import structlog
-from fastmcp.server import FastMCP
+from fastmcp import FastMCP
 
 from src.adapters.api_docs import OpenAPIDocGenerator
 from src.adapters.auth import ApiKeyAuthAdapter, InMemoryApiKeyRepository

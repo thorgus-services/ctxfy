@@ -66,7 +66,7 @@ class ApiKeyAuthAdapter(AuthCommandPort, AuthQueryPort):
     async def create_api_key(self, api_key_request: ApiKeyRequest) -> str:
         """Create a new API key with the specified parameters."""
         # Validate the request
-        validation_result = self.validation_adapter.validate_prompt_request(
+        validation_result = await self.validation_adapter.validate_prompt_request(
             {
                 "user_id": api_key_request.user_id,
                 "scope": api_key_request.scope,
@@ -83,8 +83,8 @@ class ApiKeyAuthAdapter(AuthCommandPort, AuthQueryPort):
             }
         )
 
-        if not validation_result.is_valid:
-            raise ValueError(f"Invalid API key request: {validation_result.errors}")
+        if not validation_result["is_valid"]:
+            raise ValueError(f"Invalid API key request: {validation_result['errors']}")
 
         # Generate a secure API key
         key_id = str(uuid4())

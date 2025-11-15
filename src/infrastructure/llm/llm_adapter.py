@@ -6,7 +6,7 @@ while maintaining proper logging and architecture boundaries.
 
 import asyncio
 
-from fastmcp.server import Context
+from fastmcp import Context
 
 from src.core.ports.mcp_ports import LLMAdapterPort
 

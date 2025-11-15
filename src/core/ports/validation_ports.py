@@ -1,19 +1,22 @@
-"""Core protocols for validation operations following our architectural patterns.
-
-Primary ports (driving) are named with *CommandPort/*QueryPort convention.
-Secondary ports (driven) are named with *GatewayPort/*RepositoryPort/*PublisherPort convention.
-"""
-
+"""Validation port definitions."""
 from abc import abstractmethod
-from typing import Any, Dict, Optional
-
-from src.core.models.validation_models import ValidationResult
+from typing import Any, Dict, Protocol
 
 
-class ValidationPort:
-    """Primary port for validation operations - driving port following naming convention."""
-
+class ValidationPort(Protocol):
+    """Primary port for validation operations."""
+    
     @abstractmethod
-    def validate_prompt_request(self, data: Dict[str, Any], schema: Optional[Dict[str, Any]] = None) -> ValidationResult:
+    async def validate_schema(self, data: Dict[str, Any], schema_name: str) -> Dict[str, Any]:
+        """Validate data against a named schema."""
+        pass
+    
+    @abstractmethod
+    async def validate_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate an incoming request."""
+        pass
+        
+    @abstractmethod
+    async def validate_prompt_request(self, data: Dict[str, Any], schema: Dict[str, Any]) -> Dict[str, Any]:
         """Validate a prompt request against a schema."""
         pass

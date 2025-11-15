@@ -2,7 +2,7 @@
 
 from typing import Any, Awaitable, Callable
 
-from fastmcp.server import Context
+from fastmcp import Context
 
 from src.adapters.auth import ApiKeyAuthAdapter
 from src.core.models.auth_models import AuthResult

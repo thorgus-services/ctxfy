@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Protocol
 from src.core.models.mcp_models import HealthStatus
 
 if TYPE_CHECKING:
-    from fastmcp.server import Context
+    from fastmcp import Context
 
 
 class MCPServerCommandPort(Protocol):
