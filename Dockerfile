@@ -44,9 +44,9 @@ USER appuser
 # Expose the port (should match the configuration)
 EXPOSE 8000
 
-# Health check - verify the port is open using netcat (MCP servers don't expose standard HTTP endpoints)
+# Health check - check the health endpoint using curl
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
-    CMD nc -z localhost 8000 || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["python", "-m", "src.app.main"]
+# Run the application with uvicorn ASGI server
+CMD ["uvicorn", "src.app.main:create_app", "--host", "0.0.0.0", "--port", "8000", "--factory"]

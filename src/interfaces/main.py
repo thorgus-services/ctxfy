@@ -2,12 +2,15 @@
 
 import asyncio
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Annotated, Any, Dict, Optional
 
 import structlog
 from fastmcp import FastMCP
+from pydantic import Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
-from src.adapters.api_docs import OpenAPIDocGenerator
+from src.adapters.api_docs import MCPToolsDocsGenerator, OpenAPIDocGenerator
 from src.adapters.auth import ApiKeyAuthAdapter, InMemoryApiKeyRepository
 from src.adapters.auth.middleware import AuthMiddleware
 from src.adapters.monitoring import StructuredLoggingAdapter
@@ -76,6 +79,9 @@ class AppDependencies:
             version="1.0.0"
         )
 
+        # Initialize MCP tools documentation generator
+        self.mcp_tools_docs_generator = MCPToolsDocsGenerator()
+
 
 class MCPServerApp:
     """Main MCP server application class with dependency injection."""
@@ -108,20 +114,55 @@ class MCPServerApp:
         # Set up API key management
         self._setup_api_key_management()
 
-        # Set up documentation endpoints
-        self._setup_documentation()
-
         # Set up directory operations
         self._setup_directory_operations()
 
         # Update the OpenAPI generator with the actual MCP server instance
-        self.dependencies.openapi_generator.mcp_server = self.mcp
+        self.dependencies.openapi_generator.update_mcp_server(self.mcp)
+
+        # Update the MCP tools documentation generator with the actual MCP server instance
+        self.dependencies.mcp_tools_docs_generator.set_mcp_server(self.mcp)
+
+        # Set up documentation endpoints after updating the generator
+        self._setup_documentation()
 
     def _register_builtin_prompts(self) -> None:
         """Register built-in prompts with the FastMCP server."""
         # Example prompt - in a real application, you'd have more substantial prompts
-        async def sample_prompt(ctx: Any, param1: str = "default") -> str:
-            """A sample prompt for testing and demonstration."""
+        @self.mcp.tool(
+            name="sample-prompt",
+            description="A sample prompt for testing and demonstrating MCP capabilities.",
+            tags={"utility", "test"},
+            annotations={
+                "title": "Sample Prompt",
+                "readOnlyHint": True,
+                "openWorldHint": False
+            }
+        )
+        async def sample_prompt(
+            ctx: Any,
+            param1: Annotated[str, Field(
+                description="Input parameter for the prompt",
+                default="default"
+            )] = "default"
+        ) -> str:
+            """A sample prompt for testing and demonstrating MCP capabilities.
+
+            This tool processes an input parameter and returns a processed result.
+            It demonstrates proper logging, monitoring, and error handling patterns
+            for MCP tools.
+
+            Args:
+                ctx: FastMCP context object
+                param1: Input parameter for the prompt (defaults to "default")
+
+            Returns:
+                str: Processed result in the format "Processed: {param1}"
+
+            Example:
+                Input: {"param1": "test value"}
+                Output: "Processed: test value"
+            """
             # Log the request
             from datetime import datetime
             start_time = datetime.now()
@@ -194,30 +235,44 @@ class MCPServerApp:
                 # Return error as a string to maintain consistent return type
                 error_code_value = error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)
                 return f"Error: {error.message} (code: {error_code_value}, request_id: {error.request_id})"
-        
-        # Register the prompt with FastMCP
-        self.mcp.prompt("sample-prompt")(sample_prompt)
-        
+
         # Add to handlers for testability
         self.mcp._handlers['sample-prompt'] = {'fn': sample_prompt}  # type: ignore[attr-defined]
 
     def _setup_health_check(self) -> None:
-        """Set up the health check endpoint."""
-        async def health_check(ctx: Any) -> Dict[str, Any]:
-            """Health check endpoint returning system status."""
-            request_id = f"req-{id(ctx)}" if ctx else "health-check"
-            
+        """Set up the health check endpoint using custom route as required by GoFastMCP."""
+        @self.mcp.custom_route("/health", methods=["GET"])
+        async def health_check(request: Request) -> JSONResponse:
+            """
+            Health check endpoint returning system status.
+
+            Returns:
+                JSONResponse: Health status information including status, timestamp,
+                             uptime, version, and service checks
+
+            Example Response:
+                {
+                    "status": "healthy",
+                    "timestamp": "2023-10-10T12:00:00Z",
+                    "uptime_seconds": 3600,
+                    "version": "1.0.0",
+                    "checks": {},
+                    "service": "ctxfy-mcp-server"
+                }
+            """
             try:
                 health_status = await self.dependencies.monitoring_adapter.get_health_status()
-                return {
+                return JSONResponse({
                     "status": health_status.status,
                     "timestamp": health_status.timestamp.isoformat(),
                     "uptime_seconds": health_status.uptime_seconds,
                     "version": health_status.version,
-                    "checks": health_status.checks
-                }
+                    "checks": health_status.checks,
+                    "service": "ctxfy-mcp-server"
+                })
             except Exception as e:
                 # Log the error
+                request_id = "health-check"
                 self.dependencies.logging_adapter.log_error(
                     request_id=request_id,
                     error=e,
@@ -225,7 +280,7 @@ class MCPServerApp:
                         "endpoint": "health",
                     }
                 )
-                
+
                 # Create structured error response
                 error = ApplicationError(
                     error_code=ErrorCodes.INTERNAL_ERROR,
@@ -233,30 +288,37 @@ class MCPServerApp:
                     details=str(e),
                     request_id=request_id
                 )
-                
+
                 # Return error representation
-                return {
+                return JSONResponse({
                     "status": "unhealthy",
                     "timestamp": datetime.now().isoformat(),
                     "error": error.message,
-                    "error_code": error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)
-                }
-        
-        # Register the prompt with FastMCP
-        self.mcp.prompt("health")(health_check)
-        # Add to handlers for testability
-        self.mcp._handlers['health'] = {'fn': health_check}  # type: ignore[attr-defined]
+                    "error_code": error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code),
+                    "service": "ctxfy-mcp-server"
+                }, status_code=500)
+
 
     def _setup_metrics(self) -> None:
         """Set up the metrics endpoint."""
-        async def metrics_endpoint(ctx: Any) -> str:
-            """Metrics endpoint returning Prometheus-formatted metrics."""
+        @self.mcp.custom_route("/metrics", methods=["GET"])
+        async def metrics_endpoint(request: Request) -> Response:
+            """
+            Metrics endpoint returning Prometheus-formatted metrics.
+
+            Returns:
+                Response: Plain text response with Prometheus-formatted metrics
+            """
             try:
                 metrics_data = self.dependencies.monitoring_adapter.get_prometheus_metrics()
-                return metrics_data.decode('utf-8')  # Return as string
+                # Return as plain text response (standard for Prometheus)
+                return Response(
+                    content=metrics_data.decode('utf-8'),
+                    media_type="text/plain; version=0.0.4; charset=utf-8"
+                )
             except Exception as e:
                 # Log the error
-                request_id = f"req-{id(ctx)}" if ctx else "metrics-check"
+                request_id = "metrics-check"
                 self.dependencies.logging_adapter.log_error(
                     request_id=request_id,
                     error=e,
@@ -264,7 +326,7 @@ class MCPServerApp:
                         "endpoint": "metrics",
                     }
                 )
-                
+
                 # Create structured error response
                 error = ApplicationError(
                     error_code=ErrorCodes.INTERNAL_ERROR,
@@ -272,21 +334,61 @@ class MCPServerApp:
                     details=str(e),
                     request_id=request_id
                 )
-                
+
                 error_code_value = error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)
-                return f"# Error collecting metrics: {error.message} (code: {error_code_value})"
-        
-        # Register the prompt with FastMCP
-        self.mcp.prompt("metrics")(metrics_endpoint)
-        # Add to handlers for testability
-        self.mcp._handlers['metrics'] = {'fn': metrics_endpoint}  # type: ignore[attr-defined]
+                return Response(
+                    content=f"# Error collecting metrics: {error.message} (code: {error_code_value})",
+                    status_code=500,
+                    media_type="text/plain; charset=utf-8"
+                )
 
     def _setup_api_key_management(self) -> None:
         """Set up API key management endpoints."""
-        async def create_api_key(ctx: Any, user_id: str, scope: str = "read", ttl_hours: Optional[int] = None) -> Dict[str, Any]:
-            """Create a new API key."""
+        @self.mcp.tool(
+            name="create-api-key",
+            description="Create a new API key for authentication.",
+            tags={"auth", "security"},
+            annotations={
+                "title": "Create API Key",
+                "readOnlyHint": False,
+                "destructiveHint": False
+            }
+        )
+        async def create_api_key(
+            ctx: Any,
+            user_id: Annotated[str, Field(
+                description="Unique identifier for the user requesting the API key"
+            )],
+            scope: Annotated[str, Field(
+                description="Access scope for the API key",
+                default="read"
+            )] = "read",
+            ttl_hours: Annotated[Optional[int], Field(
+                description="Time-to-live in hours for the API key",
+                default=None
+            )] = None
+        ) -> Dict[str, Any]:
+            """Create a new API key for authentication.
+
+            This tool generates a new API key that can be used for authenticating
+            requests to the MCP server. The API key can have different scopes and
+            time-to-live settings.
+
+            Args:
+                ctx: FastMCP context object
+                user_id: Unique identifier for the user requesting the API key
+                scope: Access scope for the API key (defaults to "read")
+                ttl_hours: Time-to-live in hours for the API key (optional)
+
+            Returns:
+                Dict[str, str]: A dictionary containing the generated API key and its ID
+
+            Example:
+                Input: {"user_id": "user-123", "scope": "read", "ttl_hours": 24}
+                Output: {"api_key": "generated_key_value", "key_id": "request_id"}
+            """
             request_id = f"req-{id(ctx)}" if ctx else f"api-key-{user_id}"
-            
+
             try:
                 # Create an ApiKeyRequest instance
                 api_key_request = ApiKeyRequest(
@@ -320,7 +422,7 @@ class MCPServerApp:
                         "user_id": user_id
                     }
                 )
-                
+
                 # Log error details
                 log_entry = self.dependencies.logging_adapter.create_log_entry(
                     level="ERROR",
@@ -332,7 +434,7 @@ class MCPServerApp:
                     extra={"user_id": user_id, "scope": scope}
                 )
                 self.dependencies.logging_adapter.log_request(log_entry)
-                
+
                 # Create and return structured error response
                 error = ApplicationError(
                     error_code=ErrorCodes.INTERNAL_ERROR,
@@ -340,7 +442,7 @@ class MCPServerApp:
                     details=str(type(e).__name__),
                     request_id=request_id
                 )
-                
+
                 # Log error details
                 log_entry = self.dependencies.logging_adapter.create_log_entry(
                     level="ERROR",
@@ -363,17 +465,54 @@ class MCPServerApp:
                         "details": []
                     }
                 }
-        
-        # Register the prompt with FastMCP
-        self.mcp.prompt("create-api-key")(create_api_key)
+
         # Add to handlers for testability
         self.mcp._handlers['create-api-key'] = {'fn': create_api_key}  # type: ignore[attr-defined]
 
     def _setup_documentation(self) -> None:
         """Set up documentation endpoints."""
-        # The OpenAPI documentation is generated automatically
-        # but we can register additional endpoints for docs if needed
-        pass
+        # Register endpoint to serve OpenAPI specification
+        @self.mcp.custom_route("/openapi.json", methods=["GET"])
+        async def openapi_spec(request: Request) -> JSONResponse:
+            """Endpoint to serve the OpenAPI specification."""
+            spec = await self.dependencies.openapi_generator.get_openapi_spec()
+            return JSONResponse(spec)
+
+        # Register endpoint for interactive API documentation (Swagger UI equivalent)
+        @self.mcp.custom_route("/docs", methods=["GET"])
+        async def api_docs(request: Request) -> Response:
+            """Endpoint to serve interactive API documentation."""
+            swagger_html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Ctxfy MCP Server API Documentation</title>
+                <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui.css">
+            </head>
+            <body>
+                <div id="swagger-ui"></div>
+                <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+                <script>
+                const ui = SwaggerUIBundle({
+                    url: '/openapi.json',
+                    dom_id: '#swagger-ui',
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIBundle.presets.standalone
+                    ]
+                });
+                </script>
+            </body>
+            </html>
+            """
+            return Response(content=swagger_html, media_type="text/html")
+
+        # Register endpoint to serve MCP tools specification
+        @self.mcp.custom_route("/mcp-tools", methods=["GET"])
+        async def mcp_tools_spec(request: Request) -> JSONResponse:
+            """Endpoint to serve MCP tools specification."""
+            tools_spec = await self.dependencies.mcp_tools_docs_generator.get_mcp_tools_docs()
+            return JSONResponse(tools_spec)
 
     def _setup_directory_operations(self) -> None:
         """Set up directory operations endpoints."""
@@ -383,17 +522,50 @@ class MCPServerApp:
         from src.core.use_cases.directory_use_cases import generate_default_readme
         from src.shell.orchestrators.directory_orchestrator import DirectoryOrchestrator
 
+        @self.mcp.tool(
+            name="create-ctxfy-directories",
+            description="Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem and generate a README.md file with clear instructions.",
+            tags={"filesystem", "setup"},
+            annotations={
+                "title": "Create Ctxfy Directories",
+                "readOnlyHint": False,
+                "destructiveHint": False
+            }
+        )
         async def create_ctxfy_directories(
             ctx: Any,
-            base_path: str = "ctxfy",
-            subdirectories: list[str] | None = None
+            base_path: Annotated[str, Field(
+                description="Base directory name to create",
+                default="ctxfy"
+            )] = "ctxfy",
+            subdirectories: Annotated[list[str] | None, Field(
+                description="List of subdirectories to create",
+                default=None
+            )] = None
         ) -> Dict[str, Any]:
+            """Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem
+            and generate a README.md file with clear instructions.
+
+            Args:
+                ctx: FastMCP context object
+                base_path: Base directory name to create (default: "ctxfy")
+                subdirectories: List of subdirectories to create (default: ["specifications"])
+
+            Returns:
+                Dict[str, Any]: Result dictionary with success status and details
+
+            Example:
+                Input: {"base_path": "ctxfy", "subdirectories": ["specifications", "docs"]}
+                Output: {
+                    "success": True,
+                    "message": "Successfully created ctxfy directories...",
+                    "directories_created": ["ctxfy", "ctxfy/specifications", "ctxfy/docs"],
+                    "readme_created": "ctxfy/README.md"
+                }
+            """
             if subdirectories is None:
                 subdirectories = ["specifications"]
-            """
-            Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem
-            and generate a README.md file with clear instructions.
-            """
+
             try:
                 # Create filesystem adapter with context
                 filesystem_adapter = FilesystemAdapter(ctx)
@@ -448,12 +620,34 @@ class MCPServerApp:
                     "error": str(e)
                 }
 
-        # Register the directory creation prompt with FastMCP - using proper decorator syntax
-        self.mcp.prompt("Create ctxfy server output directories with {base_path} and subdirectories {subdirectories}")(create_ctxfy_directories)
+        # Add to handlers for testability
+        self.mcp._handlers['create-ctxfy-directories'] = {'fn': create_ctxfy_directories}  # type: ignore[attr-defined]
 
+        @self.mcp.tool(
+            name="check-ctxfy-directories",
+            description="Check if the ctxfy directories already exist in the client's filesystem.",
+            tags={"filesystem", "check"},
+            annotations={
+                "title": "Check Ctxfy Directories",
+                "readOnlyHint": True,
+                "destructiveHint": False
+            }
+        )
         async def check_ctxfy_directories(ctx: Any) -> Dict[str, Any]:
-            """
-            Check if the ctxfy directories already exist in the client's filesystem.
+            """Check if the ctxfy directories already exist in the client's filesystem.
+
+            Args:
+                ctx: FastMCP context object
+
+            Returns:
+                Dict[str, Any]: Dictionary with existence status of directories
+
+            Example:
+                Output: {
+                    "ctxfy_exists": True,
+                    "specifications_exists": True,
+                    "all_exist": True
+                }
             """
             try:
                 # Create filesystem adapter with context
@@ -479,8 +673,8 @@ class MCPServerApp:
                     "all_exist": False
                 }
 
-        # Register the directory check prompt with FastMCP
-        self.mcp.prompt("Check if ctxfy directories exist")(check_ctxfy_directories)
+        # Add to handlers for testability
+        self.mcp._handlers['check-ctxfy-directories'] = {'fn': check_ctxfy_directories}  # type: ignore[attr-defined]
 
     async def start_server(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """Start the MCP server."""
@@ -501,9 +695,47 @@ class MCPServerApp:
         await self.mcp.run_http_async(host=host, port=port, transport='http',
                                       uvicorn_config={'ws': None})  # Disable WebSocket to avoid 'websockets-sansio' issues
 
+    def serve_with_uvicorn(self, host: str = "127.0.0.1", port: int = 8000) -> None:
+        """Serve the application using uvicorn (ASGI server).
+
+        This method allows the application to be deployed using standard ASGI servers.
+        """
+        import uvicorn
+
+        # Log server startup
+        log_entry = self.dependencies.logging_adapter.create_log_entry(
+            level="INFO",
+            message="MCP Server starting (ASGI mode with uvicorn)",
+            request_id="SERVER_START",
+            latency_ms=0,
+            endpoint="server",
+            llm_model="N/A",
+            extra={"host": host, "port": str(port), "server_type": "uvicorn"}
+        )
+        self.dependencies.logging_adapter.log_request(log_entry)
+
+        # Run with uvicorn using the ASGI app
+        uvicorn.run(
+            "src.interfaces.main:create_app",
+            host=host,
+            port=port,
+            factory=True,  # Tells uvicorn to call create_app() to get the app
+            reload=False,  # Disable reload in production
+            log_level="info"
+        )
+
     def get_app(self) -> FastMCP:
         """Get the FastMCP app instance."""
         return self.mcp
+
+
+def create_app() -> FastMCP:
+    """ASGI application factory that creates and returns the FastMCP ASGI app.
+
+    This allows the application to be served with standard ASGI servers like uvicorn.
+    """
+    app = MCPServerApp()
+    return app.get_app()
 
 
 # Main entry point
