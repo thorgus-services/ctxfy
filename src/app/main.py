@@ -1,40 +1,21 @@
 """Main application entry point with dependency injection for the ctxfy MCP Server."""
 
 import asyncio
-from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 import structlog
 from fastmcp import FastMCP
-from pydantic import Field
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
 
-from src.adapters.api_docs import MCPToolsDocsGenerator, OpenAPIDocGenerator
-from src.adapters.auth import ApiKeyAuthAdapter, InMemoryApiKeyRepository
-from src.adapters.auth.middleware import AuthMiddleware
-from src.adapters.context.filesystem_adapter import FilesystemAdapter
-from src.adapters.monitoring import StructuredLoggingAdapter
-from src.adapters.monitoring.monitoring import MonitoringAdapter
-from src.adapters.security.path_validator import SecurityAdapter
-from src.adapters.validation import SchemaValidationAdapter
+from src.app.dependencies import AppDependencies
+from src.app.handlers.auth_handlers import register_auth_handlers
+from src.app.handlers.documentation_handlers import register_documentation_handlers
+from src.app.handlers.monitoring_handlers import register_monitoring_handlers
 from src.config import settings
-from src.core.models.auth_models import ApiKeyRequest
-from src.core.models.directory_models import DirectoryConfig
-from src.core.models.error_models import (
-    ApplicationError,
-    ErrorCodes,
-)
-from src.core.use_cases.directory_use_cases import generate_default_readme
-from src.shell.orchestrators.directory_orchestrator import DirectoryOrchestrator
 
-# For type checking compatibility
 if TYPE_CHECKING:
-    
-    class FastMCPWithHandlers(FastMCP):
-        _handlers: Dict[str, Any]
+    pass
 
-# Configure structlog
+
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
@@ -54,613 +35,52 @@ structlog.configure(
 )
 
 
-class AppDependencies:
-    """Container for application dependencies with dependency injection."""
-
-    def __init__(self) -> None:
-
-        # Initialize the in-memory API key repository
-        self.api_key_repo = InMemoryApiKeyRepository()
-
-        # Initialize authentication adapter
-        self.auth_adapter = ApiKeyAuthAdapter(self.api_key_repo)
-
-        # Initialize monitoring and logging
-        self.start_time = datetime.now()
-        self.monitoring_adapter = MonitoringAdapter(self.start_time)
-        self.logging_adapter = StructuredLoggingAdapter()
-
-        # Initialize validation adapter
-        self.validation_adapter = SchemaValidationAdapter()
-
-        # Initialize auth middleware
-        self.auth_middleware = AuthMiddleware(self.auth_adapter)
-
-        # Initialize OpenAPI documentation
-        self.openapi_generator = OpenAPIDocGenerator(
-            mcp_server=None,  # Will be set after FastMCP initialization
-            title="ctxfy MCP Server API",
-            description="Production-ready ctxfy MCP Server with authentication, monitoring, and documentation",
-            version="1.0.0"
-        )
-
-        # Initialize MCP tools documentation generator
-        self.mcp_tools_docs_generator = MCPToolsDocsGenerator()
-
-
 class MCPServerApp:
-    """Main MCP server application class with dependency injection."""
+    """Main MCP server application class with dependency injection following hexagonal architecture."""
 
     def __init__(self, dependencies: Optional[AppDependencies] = None) -> None:
         self.dependencies = dependencies or AppDependencies()
         self.mcp = FastMCP()
-        # Initialize handlers dictionary for testing purposes to access registered functions
         self.mcp._handlers = {}  # type: ignore[attr-defined]
-        
-        # Ensure start method exists for test mocking purposes
+
         if not hasattr(self.mcp, 'start'):
-            # Add a default start method that can be mocked
             async def default_start(host: str = "127.0.0.1", port: int = 8000) -> None:
                 pass
             self.mcp.start = default_start  # type: ignore
         self._setup_server()
 
     def _setup_server(self) -> None:
-        """Set up the FastMCP server with all required functionality."""
-        # Register built-in prompts
-        self._register_builtin_prompts()
+        """Set up the FastMCP server with all required functionality by registering handlers."""
 
-        # Set up health check endpoint
-        self._setup_health_check()
+        auth_handlers = register_auth_handlers(
+            self.mcp,
+            self.dependencies.auth_adapter,
+            self.dependencies.logging_adapter,
+            self.dependencies
+        )
+        self.mcp._handlers.update(auth_handlers)  # type: ignore[attr-defined]
 
-        # Set up metrics endpoint
-        self._setup_metrics()
 
-        # Set up API key management
-        self._setup_api_key_management()
+        monitoring_handlers = register_monitoring_handlers(
+            self.mcp,
+            self.dependencies.monitoring_adapter,
+            self.dependencies.logging_adapter,
+            self.dependencies.monitoring_adapter,
+            self.dependencies
+        )
+        self.mcp._handlers.update(monitoring_handlers)  # type: ignore[attr-defined]
 
-        # Set up directory operations
-        self._setup_directory_operations()
-
-        # Update the OpenAPI generator with the actual MCP server instance
         self.dependencies.openapi_generator.update_mcp_server(self.mcp)
-
-        # Update the MCP tools documentation generator with the actual MCP server instance
         self.dependencies.mcp_tools_docs_generator.set_mcp_server(self.mcp)
 
-        # Set up documentation endpoints after updating the generator
-        self._setup_documentation()
-
-    def _register_builtin_prompts(self) -> None:
-        """Register built-in prompts with the FastMCP server."""
-        # Example prompt - in a real application, you'd have more substantial prompts
-        async def sample_prompt(
-            ctx: Any,
-            param1: Annotated[str, Field(
-                description="Input parameter for the prompt",
-                default="default"
-            )] = "default"
-        ) -> str:
-            """A sample prompt for testing and demonstrating MCP capabilities.
-
-            This tool processes an input parameter and returns a processed result.
-            It demonstrates proper logging, monitoring, and error handling patterns
-            for MCP tools.
-
-            Args:
-                ctx: FastMCP context object
-                param1: Input parameter for the prompt (defaults to "default")
-
-            Returns:
-                str: Processed result in the format "Processed: {param1}"
-
-            Example:
-                Input: {"param1": "test value"}
-                Output: "Processed: test value"
-            """
-            # Log the request
-            start_time = datetime.now()
-            request_id = f"req-{id(ctx)}" if ctx else "unknown"
-
-            try:
-                # Execute the prompt logic
-                result = f"Processed: {param1}"
-
-                # Calculate latency
-                latency_ms = (datetime.now() - start_time).total_seconds() * 1000
-
-                # Log the successful execution
-                log_entry = self.dependencies.logging_adapter.create_log_entry(
-                    level="INFO",
-                    message="Sample prompt executed successfully",
-                    request_id=request_id,
-                    latency_ms=latency_ms,
-                    endpoint="sample-prompt",
-                    llm_model="default"
-                )
-                self.dependencies.logging_adapter.log_request(log_entry)
-
-                # Record metrics
-                self.dependencies.monitoring_adapter.record_prompt_execution(
-                    template_id="sample-prompt",
-                    latency_ms=latency_ms,
-                    success=True
-                )
-
-                return result
-            except Exception as e:
-                # Log the error
-                self.dependencies.logging_adapter.log_error(
-                    request_id=request_id,
-                    error=e,
-                    context={
-                        "endpoint": "sample-prompt",
-                        "param1": param1
-                    }
-                )
-
-                # Record metrics for failure
-                self.dependencies.monitoring_adapter.record_prompt_execution(
-                    template_id="sample-prompt",
-                    latency_ms=0,
-                    success=False
-                )
-
-                # Create and return structured error response
-                error = ApplicationError(
-                    error_code=ErrorCodes.PROCESSING_ERROR,
-                    message=str(e),
-                    details=str(type(e).__name__),
-                    request_id=request_id
-                )
-
-                # Log error details
-                log_entry = self.dependencies.logging_adapter.create_log_entry(
-                    level="ERROR",
-                    message=f"Sample prompt execution failed: {str(e)}",
-                    request_id=request_id,
-                    latency_ms=0,
-                    endpoint="sample-prompt",
-                    llm_model="default",
-                    extra={"error_code": error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)}
-                )
-                self.dependencies.logging_adapter.log_request(log_entry)
-
-                # Return error as a string to maintain consistent return type
-                error_code_value = error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)
-                return f"Error: {error.message} (code: {error_code_value}, request_id: {error.request_id})"
-
-        # Add to handlers for testability BEFORE registering with FastMCP
-        self.mcp._handlers['sample-prompt'] = {'fn': sample_prompt}  # type: ignore[attr-defined]
-
-        # Register with FastMCP using the decorator after storing the original function
-        self.mcp.tool(
-            name="sample-prompt",
-            description="A sample prompt for testing and demonstrating MCP capabilities.",
-            tags={"utility", "test"},
-            annotations={
-                "title": "Sample Prompt",
-                "readOnlyHint": True,
-                "openWorldHint": False
-            }
-        )(sample_prompt)
-
-    def _setup_health_check(self) -> None:
-        """Set up the health check endpoint using custom route as required by GoFastMCP."""
-        @self.mcp.custom_route("/health", methods=["GET"])
-        async def health_check(request: Request) -> JSONResponse:
-            """Health check endpoint returning system status."""
-            try:
-                health_status = await self.dependencies.monitoring_adapter.get_health_status()
-                return JSONResponse({
-                    "status": health_status.status,
-                    "timestamp": health_status.timestamp.isoformat(),
-                    "uptime_seconds": health_status.uptime_seconds,
-                    "version": health_status.version,
-                    "checks": health_status.checks,
-                    "service": "ctxfy-mcp-server"
-                })
-            except Exception as e:
-                # Log the error
-                request_id = "health-check"
-                self.dependencies.logging_adapter.log_error(
-                    request_id=request_id,
-                    error=e,
-                    context={
-                        "endpoint": "health",
-                    }
-                )
-
-                # Create structured error response
-                error = ApplicationError(
-                    error_code=ErrorCodes.INTERNAL_ERROR,
-                    message="Health check failed",
-                    details=str(e),
-                    request_id=request_id
-                )
-
-                # Return error representation
-                return JSONResponse({
-                    "status": "unhealthy",
-                    "timestamp": datetime.now().isoformat(),
-                    "error": error.message,
-                    "error_code": error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code),
-                    "service": "ctxfy-mcp-server"
-                }, status_code=500)
-
-
-    def _setup_metrics(self) -> None:
-        """Set up the metrics endpoint."""
-        @self.mcp.custom_route("/metrics", methods=["GET"])
-        async def metrics_endpoint(request: Request) -> Response:
-            """Metrics endpoint returning Prometheus-formatted metrics."""
-            try:
-                metrics_data = self.dependencies.monitoring_adapter.get_prometheus_metrics()
-                # Return as plain text response (standard for Prometheus)
-                return Response(
-                    content=metrics_data.decode('utf-8'),
-                    media_type="text/plain; version=0.0.4; charset=utf-8"
-                )
-            except Exception as e:
-                # Log the error
-                request_id = "metrics-check"
-                self.dependencies.logging_adapter.log_error(
-                    request_id=request_id,
-                    error=e,
-                    context={
-                        "endpoint": "metrics",
-                    }
-                )
-
-                # Create structured error response
-                error = ApplicationError(
-                    error_code=ErrorCodes.INTERNAL_ERROR,
-                    message="Metrics collection failed",
-                    details=str(e),
-                    request_id=request_id
-                )
-
-                error_code_value = error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code)
-                return Response(
-                    content=f"# Error collecting metrics: {error.message} (code: {error_code_value})",
-                    status_code=500,
-                    media_type="text/plain; charset=utf-8"
-                )
-
-    def _setup_api_key_management(self) -> None:
-        """Set up API key management endpoints."""
-        async def create_api_key(
-            ctx: Any,
-            user_id: Annotated[str, Field(
-                description="Unique identifier for the user requesting the API key"
-            )],
-            scope: Annotated[str, Field(
-                description="Access scope for the API key",
-                default="read"
-            )] = "read",
-            ttl_hours: Annotated[Optional[int], Field(
-                description="Time-to-live in hours for the API key",
-                default=None
-            )] = None
-        ) -> Dict[str, Any]:
-            """Create a new API key for authentication.
-
-            This tool generates a new API key that can be used for authenticating
-            requests to the MCP server. The API key can have different scopes and
-            time-to-live settings.
-
-            Args:
-                user_id: Unique identifier for the user requesting the API key
-                scope: Access scope for the API key (defaults to "read")
-                ttl_hours: Time-to-live in hours for the API key (optional)
-
-            Returns:
-                Dict[str, str]: A dictionary containing the generated API key and its ID
-
-            Example:
-                Input: {"user_id": "user-123", "scope": "read", "ttl_hours": 24}
-                Output: {"api_key": "generated_key_value", "key_id": "request_id"}
-            """
-            request_id = f"req-{id(ctx)}" if ctx else f"api-key-{user_id}"
-
-            try:
-                # Create an ApiKeyRequest instance
-                api_key_request = ApiKeyRequest(
-                    user_id=user_id,
-                    scope=scope,
-                    ttl_hours=ttl_hours
-                )
-
-                # Generate and store the API key
-                new_key = await self.dependencies.auth_adapter.create_api_key(api_key_request)
-
-                # Log the successful creation
-                log_entry = self.dependencies.logging_adapter.create_log_entry(
-                    level="INFO",
-                    message="API key created successfully",
-                    request_id=api_key_request.request_id,
-                    latency_ms=0,  # Latency not applicable for this sync operation
-                    user_id=user_id,
-                    endpoint="create-api-key"
-                )
-                self.dependencies.logging_adapter.log_request(log_entry)
-
-                return {"api_key": new_key, "key_id": api_key_request.request_id}
-            except Exception as e:
-                # Log the error
-                self.dependencies.logging_adapter.log_error(
-                    request_id=request_id,
-                    error=e,
-                    context={
-                        "endpoint": "create-api-key",
-                        "user_id": user_id
-                    }
-                )
-
-                # Log error details
-                log_entry = self.dependencies.logging_adapter.create_log_entry(
-                    level="ERROR",
-                    message=f"API key creation failed: {str(e)}",
-                    request_id=request_id,
-                    latency_ms=0,
-                    endpoint="create-api-key",
-                    llm_model="N/A",
-                    extra={"user_id": user_id, "scope": scope}
-                )
-                self.dependencies.logging_adapter.log_request(log_entry)
-
-                # Create and return structured error response
-                error = ApplicationError(
-                    error_code=ErrorCodes.INTERNAL_ERROR,
-                    message=str(e),
-                    details=str(type(e).__name__),
-                    request_id=request_id
-                )
-
-                # Log error details
-                log_entry = self.dependencies.logging_adapter.create_log_entry(
-                    level="ERROR",
-                    message=f"API key creation failed: {str(e)}",
-                    request_id=request_id,
-                    latency_ms=0,
-                    endpoint="create-api-key",
-                    llm_model="N/A",
-                    extra={"user_id": user_id, "scope": scope}
-                )
-                self.dependencies.logging_adapter.log_request(log_entry)
-
-                # For MCP, return error details in a structured way
-                return {
-                    "success": False,
-                    "error": {
-                        "message": error.message,
-                        "error_code": error.error_code.value if hasattr(error.error_code, 'value') else str(error.error_code),
-                        "request_id": error.request_id,
-                        "details": []
-                    }
-                }
-
-        # Add to handlers for testability BEFORE registering with FastMCP
-        self.mcp._handlers['create-api-key'] = {'fn': create_api_key}  # type: ignore[attr-defined]
-
-        # Register with FastMCP using the decorator after storing the original function
-        self.mcp.tool(
-            name="create-api-key",
-            description="Create a new API key for authentication.",
-            tags={"auth", "security"},
-            annotations={
-                "title": "Create API Key",
-                "readOnlyHint": False,
-                "destructiveHint": False
-            }
-        )(create_api_key)
-
-    def _setup_directory_operations(self) -> None:
-        """Set up directory operations endpoints."""
-
-        async def create_ctxfy_directories(
-            ctx: Any,
-            base_path: Annotated[str, Field(
-                description="Base directory name to create",
-                default="ctxfy"
-            )] = "ctxfy",
-            subdirectories: list[str] | None = None
-        ) -> Dict[str, Any]:
-            """Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem
-            and generate a README.md file with clear instructions.
-
-            Args:
-                ctx: FastMCP context object
-                base_path: Base directory name to create (default: "ctxfy")
-                subdirectories: List of subdirectories to create (default: ["specifications"])
-
-            Returns:
-                Dict[str, Any]: Result dictionary with success status and details
-
-            Example:
-                Input: {"base_path": "ctxfy", "subdirectories": ["specifications", "docs"]}
-                Output: {
-                    "success": True,
-                    "message": "Successfully created ctxfy directories...",
-                    "directories_created": ["ctxfy", "ctxfy/specifications", "ctxfy/docs"],
-                    "readme_created": "ctxfy/README.md"
-                }
-            """
-            if subdirectories is None:
-                subdirectories = ["specifications"]
-
-            try:
-                # Create filesystem adapter with context
-                filesystem_adapter = FilesystemAdapter(ctx)
-
-                # Wrap with security adapter
-                security_adapter = SecurityAdapter(filesystem_adapter)
-
-                # Create orchestrator
-                dir_orchestrator = DirectoryOrchestrator(ctx, security_adapter)
-
-                # Generate default README content
-                config = DirectoryConfig(
-                    base_path=base_path,
-                    subdirectories=tuple(subdirectories),
-                    readme_content=generate_default_readme(DirectoryConfig(base_path=base_path, subdirectories=tuple(subdirectories)))
-                )
-
-                # Ensure directories exist
-                success = await dir_orchestrator.ensure_directories_exist(config)
-
-                if success:
-                    # Create README file in the base directory
-                    readme_success = await dir_orchestrator.create_readme(config.readme_content, base_path)
-
-                    if readme_success:
-                        # Log success
-                        await ctx.info(f"Successfully created ctxfy directories: {base_path} and subdirectories: {subdirectories}")
-
-                        return {
-                            "success": True,
-                            "message": f"Successfully created ctxfy directories: {base_path} with subdirectories {subdirectories}",
-                            "directories_created": [base_path] + [f"{base_path}/{subdir}" for subdir in subdirectories],
-                            "readme_created": f"{base_path}/README.md"
-                        }
-                    else:
-                        await ctx.error("Failed to create README file")
-                        return {
-                            "success": False,
-                            "error": "Failed to create README file"
-                        }
-                else:
-                    await ctx.error("Failed to create directories")
-                    return {
-                        "success": False,
-                        "error": "Failed to create directories"
-                    }
-
-            except Exception as e:
-                await ctx.error(f"Error in create_ctxfy_directories: {str(e)}")
-                return {
-                    "success": False,
-                    "error": str(e)
-                }
-
-        # Add to handlers for testability BEFORE registering with FastMCP
-        self.mcp._handlers['create-ctxfy-directories'] = {'fn': create_ctxfy_directories}  # type: ignore[attr-defined]
-
-        # Register with FastMCP using the decorator after storing the original function
-        self.mcp.tool(
-            name="create-ctxfy-directories",
-            description="Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem and generate a README.md file with clear instructions.",
-            tags={"filesystem", "setup"},
-            annotations={
-                "title": "Create Ctxfy Directories",
-                "readOnlyHint": False,
-                "destructiveHint": False
-            }
-        )(create_ctxfy_directories)
-
-        async def check_ctxfy_directories(ctx: Any) -> Dict[str, Any]:
-            """Check if the ctxfy directories already exist in the client's filesystem.
-
-            Args:
-                ctx: FastMCP context object
-
-            Returns:
-                Dict[str, Any]: Dictionary with existence status of directories
-
-            Example:
-                Output: {
-                    "ctxfy_exists": True,
-                    "specifications_exists": True,
-                    "all_exist": True
-                }
-            """
-            try:
-                # Create filesystem adapter with context
-                filesystem_adapter = FilesystemAdapter(ctx)
-
-                # Check if main ctxfy directory exists
-                ctxfy_exists = await filesystem_adapter.directory_exists("ctxfy")
-
-                # Check if ctxfy/specifications directory exists
-                specifications_exists = await filesystem_adapter.directory_exists("ctxfy/specifications")
-
-                return {
-                    "ctxfy_exists": ctxfy_exists,
-                    "specifications_exists": specifications_exists,
-                    "all_exist": ctxfy_exists and specifications_exists
-                }
-            except Exception as e:
-                await ctx.error(f"Error in check_ctxfy_directories: {str(e)}")
-                return {
-                    "error": str(e),
-                    "ctxfy_exists": False,
-                    "specifications_exists": False,
-                    "all_exist": False
-                }
-
-        # Add to handlers for testability BEFORE registering with FastMCP
-        self.mcp._handlers['check-ctxfy-directories'] = {'fn': check_ctxfy_directories}  # type: ignore[attr-defined]
-
-        # Register with FastMCP using the decorator after storing the original function
-        self.mcp.tool(
-            name="check-ctxfy-directories",
-            description="Check if the ctxfy directories already exist in the client's filesystem.",
-            tags={"filesystem", "check"},
-            annotations={
-                "title": "Check Ctxfy Directories",
-                "readOnlyHint": True,
-                "destructiveHint": False
-            }
-        )(check_ctxfy_directories)
-
-    def _setup_documentation(self) -> None:
-        """Set up documentation endpoints."""
-        # Register endpoint to serve OpenAPI specification
-        @self.mcp.custom_route("/openapi.json", methods=["GET"])
-        async def openapi_spec(request: Request) -> JSONResponse:
-            """Endpoint to serve the OpenAPI specification."""
-            spec = await self.dependencies.openapi_generator.get_openapi_spec()
-            return JSONResponse(spec)
-
-        # Register endpoint for interactive API documentation (Swagger UI equivalent)
-        @self.mcp.custom_route("/docs", methods=["GET"])
-        async def api_docs(request: Request) -> Response:
-            """Endpoint to serve interactive API documentation."""
-            swagger_html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Ctxfy MCP Server API Documentation</title>
-                <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui.css">
-            </head>
-            <body>
-                <div id="swagger-ui"></div>
-                <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
-                <script>
-                const ui = SwaggerUIBundle({
-                    url: '/openapi.json',
-                    dom_id: '#swagger-ui',
-                    presets: [
-                        SwaggerUIBundle.presets.apis,
-                        SwaggerUIBundle.presets.standalone
-                    ]
-                });
-                </script>
-            </body>
-            </html>
-            """
-            return Response(content=swagger_html, media_type="text/html")
-
-        # Register endpoint to serve MCP tools specification
-        @self.mcp.custom_route("/mcp-tools", methods=["GET"])
-        async def mcp_tools_spec(request: Request) -> JSONResponse:
-            """Endpoint to serve MCP tools specification."""
-            tools_spec = await self.dependencies.mcp_tools_docs_generator.get_mcp_tools_docs()
-            return JSONResponse(tools_spec)
+        doc_handlers = register_documentation_handlers(
+            self.mcp,
+            self.dependencies
+        )
+        self.mcp._handlers.update(doc_handlers)  # type: ignore[attr-defined]
 
     async def start_server(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """Start the MCP server (for direct execution, not ASGI deployment)."""
-        # Log server startup
         log_entry = self.dependencies.logging_adapter.create_log_entry(
             level="INFO",
             message="MCP Server starting (direct execution mode)",
@@ -672,19 +92,13 @@ class MCPServerApp:
         )
         self.dependencies.logging_adapter.log_request(log_entry)
 
-        # Run the FastMCP HTTP server with proper parameters
-        # Specify HTTP transport and avoid websockets configuration issues
         await self.mcp.run_http_async(host=host, port=port, transport='http',
-                                      uvicorn_config={'ws': None})  # Disable WebSocket to avoid 'websockets-sansio' issues
+                                      uvicorn_config={'ws': None})
 
     def serve_with_uvicorn(self, host: str = "127.0.0.1", port: int = 8000) -> None:
-        """Serve the application using uvicorn (ASGI server).
-
-        This method allows the application to be deployed using standard ASGI servers.
-        """
+        """Serve the application using uvicorn (ASGI server)."""
         import uvicorn
 
-        # Log server startup
         log_entry = self.dependencies.logging_adapter.create_log_entry(
             level="INFO",
             message="MCP Server starting (ASGI mode with uvicorn)",
@@ -696,13 +110,12 @@ class MCPServerApp:
         )
         self.dependencies.logging_adapter.log_request(log_entry)
 
-        # Run with uvicorn using the ASGI app
         uvicorn.run(
             "src.app.main:create_app",
             host=host,
             port=port,
-            factory=True,  # Tells uvicorn to call create_app() to get the app
-            reload=False,  # Disable reload in production
+            factory=True,
+            reload=False,
             log_level="info"
         )
 
@@ -712,20 +125,15 @@ class MCPServerApp:
 
 
 def create_app() -> FastMCP:
-    """ASGI application factory that creates and returns the FastMCP ASGI app.
-
-    This allows the application to be served with standard ASGI servers like uvicorn.
-    """
+    """ASGI application factory that creates and returns the FastMCP ASGI app."""
     app = MCPServerApp()
     return app.get_app()
 
 
-# Main entry point for direct running
 async def main() -> None:
     """Main entry point for the application."""
     app = MCPServerApp()
 
-    # Get host and port from settings (with environment variable overrides)
     host = settings.server_host
     port = settings.server_port
 

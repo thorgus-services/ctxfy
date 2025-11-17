@@ -62,38 +62,6 @@ Plain text response in Prometheus format.
 
 All MCP tools follow the POST pattern to `/mcp/{tool_name}` endpoints and provide rich metadata in the MCP tools specification.
 
-### Sample Prompt Tool
-
-**Name:** sample-prompt
-**Title:** Sample Prompt
-**Tags:** {"utility", "test"}
-**Annotations:**
-- `readOnlyHint`: true
-- `openWorldHint`: false
-
-A sample prompt for testing and demonstrating MCP capabilities. This tool processes an input parameter and returns a processed result. It demonstrates proper logging, monitoring, and error handling patterns for MCP tools.
-
-#### Usage
-**POST** `/mcp/sample-prompt`
-
-**Request Body:**
-```json
-{
-  "param1": "string"
-}
-```
-
-**Parameters:**
-- `param1` (optional, default: "default"): Input parameter for the prompt
-
-**Response:**
-```json
-"Processed: {param1}"
-```
-
-**Example:**
-- Input: `{"param1": "test value"}`
-- Output: `"Processed: test value"`
 
 ### Create API Key Tool
 
@@ -135,73 +103,7 @@ Create a new API key for authentication. This tool generates a new API key that 
 - Input: `{"user_id": "user-123", "scope": "read", "ttl_hours": 24}`
 - Output: `{"api_key": "generated_key_value", "key_id": "request_id"}`
 
-### Check Ctxfy Directories Tool
 
-**Name:** check-ctxfy-directories
-**Title:** Check Ctxfy Directories
-**Tags:** {"filesystem", "check"}
-**Annotations:**
-- `readOnlyHint`: true
-- `destructiveHint`: false
-
-Check if the ctxfy directories already exist in the client's filesystem.
-
-#### Usage
-**POST** `/mcp/check-ctxfy-directories`
-
-**Request Body:**
-```json
-{}
-```
-
-**Response:**
-```json
-{
-  "ctxfy_exists": "boolean",
-  "specifications_exists": "boolean",
-  "all_exist": "boolean"
-}
-```
-
-### Create Ctxfy Directories Tool
-
-**Name:** create-ctxfy-directories
-**Title:** Create Ctxfy Directories
-**Tags:** {"filesystem", "setup"}
-**Annotations:**
-- `readOnlyHint`: false
-- `destructiveHint`: false
-
-Create ctxfy/ and ctxfy/specifications/ directories in the client's filesystem and generate a README.md file with clear instructions.
-
-#### Usage
-**POST** `/mcp/create-ctxfy-directories`
-
-**Request Body:**
-```json
-{
-  "base_path": "string",
-  "subdirectories": "array"
-}
-```
-
-**Parameters:**
-- `base_path` (optional, default: "ctxfy"): Base directory name to create
-- `subdirectories` (optional, default: ["specifications"]): List of subdirectories to create
-
-**Response:**
-```json
-{
-  "success": "boolean",
-  "message": "string",
-  "directories_created": "array",
-  "readme_created": "string"
-}
-```
-
-**Example:**
-- Input: `{"base_path": "ctxfy", "subdirectories": ["specifications", "docs"]}`
-- Output: `{"success": true, "message": "Successfully created ctxfy directories...", "directories_created": ["ctxfy", "ctxfy/specifications", "ctxfy/docs"], "readme_created": "ctxfy/README.md"}`
 
 ## API Documentation Endpoints
 
@@ -247,10 +149,10 @@ MCP tools follow fastMCP patterns for parameter validation:
 ### Using curl to call an MCP tool:
 
 ```bash
-curl -X POST http://localhost:8000/mcp/sample-prompt \
+curl -X POST http://localhost:8000/mcp/create-api-key \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
-  -d '{"param1": "test value"}'
+  -d '{"user_id": "user-123", "scope": "read"}'
 ```
 
 ### Using Python with requests:
@@ -263,8 +165,8 @@ headers = {
     "Authorization": "Bearer YOUR_API_KEY"
 }
 
-data = {"param1": "test value"}
-response = requests.post("http://localhost:8000/mcp/sample-prompt", json=data, headers=headers)
+data = {"user_id": "user-123", "scope": "read"}
+response = requests.post("http://localhost:8000/mcp/create-api-key", json=data, headers=headers)
 print(response.json())
 ```
 

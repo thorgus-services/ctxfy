@@ -5,7 +5,7 @@ Secondary ports (driven) are named with *GatewayPort/*RepositoryPort/*PublisherP
 """
 
 from abc import abstractmethod
-from typing import Dict
+from typing import Dict, Optional
 
 from src.core.models.monitoring_models import (
     HealthStatus,
@@ -31,6 +31,13 @@ class LoggingPort:
     @abstractmethod
     def log_health_check(self, status: str, uptime_seconds: float) -> None:
         """Log a health check result."""
+        pass
+
+    @abstractmethod
+    def create_log_entry(self, level: str, message: str, request_id: str, latency_ms: float,
+                        user_id: Optional[str] = None, endpoint: Optional[str] = None,
+                        llm_model: Optional[str] = None, extra: Optional[Dict[str, str]] = None) -> LogEntry:
+        """Helper method to create a LogEntry instance with proper validation."""
         pass
 
 

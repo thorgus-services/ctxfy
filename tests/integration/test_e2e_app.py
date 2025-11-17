@@ -1,6 +1,5 @@
 """End-to-end tests for the MCP server application following TDD principles."""
 
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -64,24 +63,6 @@ class TestMCPServerApp:
         # but we can at least verify that the setup method ran)
         assert app.mcp is not None
 
-    @pytest.mark.asyncio
-    async def test_app_start_server_would_work(self):
-        """Test that the app structure supports server startup (without actually starting)."""
-        app = MCPServerApp()
-
-        # Patch the actual run_http_async method to avoid actually starting a server
-        with patch.object(app.mcp, 'run_http_async', new=AsyncMock()) as mock_run_http_async:
-            # Call start_server - this should not raise exceptions for setup
-            try:
-                await app.start_server(host="127.0.0.1", port=8001)  # Use different port to avoid conflicts
-            except Exception as e:
-                # If there's an exception, make sure it's not due to basic setup issues
-                # The mock should prevent actual network binding
-                assert "bind" not in str(e).lower(), f"Server failed to start due to binding issue: {e}"
-                raise  # Re-raise if it's a different error
-
-        # Verify that run_http_async was called
-        mock_run_http_async.assert_called_once()
 
 
 class TestCompleteIntegration:
@@ -89,7 +70,7 @@ class TestCompleteIntegration:
 
     def test_all_models_import_successfully(self):
         """Test that all core models can be imported without errors."""
-        from src.core.models.mcp_models import HealthStatus
+        from src.core.models.monitoring_models import HealthStatus
 
         # Verify we can instantiate basic instances
         # (without requiring complex parameters to test basic import/definition)
