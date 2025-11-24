@@ -1,73 +1,53 @@
-## Purpose
-Default to immutable, self-validating value objects in the Functional Core using pure Python standard library with no external dependencies.
+## Value Objects and Immutability
 
-## Guidelines
-All core data classes must be immutable:
-- Use `@dataclass(frozen=True)` for all value objects
-- Validate invariants in `__post_init__` or dedicated factory methods
-- Never expose mutable collections — convert to `tuple`, `frozenset` or return defensive copies
+This rule enforces immutability for domain objects in the core layer to ensure data integrity and referential transparency:
 
-Prefer type-safe structures over primitive types:
-- Use `dataclasses` and `typing.NamedTuple` over plain `dict`/`list` for domain models
-- Leverage Python's type system for compile-time validation
-- Use transformation methods that return new instances instead of mutation
+Value objects must be immutable to enable:
+- Reliable reasoning about program behavior
+- Safe sharing across threads without synchronization
+- Simplified testing without setup/teardown complexity
 
-Implementation patterns:
+Core implementation pattern:
 ```python
-from dataclasses import dataclass, field
-from decimal import Decimal
-from typing import Tuple, FrozenSet
+from dataclasses import dataclass
 
 @dataclass(frozen=True)
-class Money:
-    amount: Decimal
-    currency: str 
+class OrderLine:
+    orderid: str
+    sku: str
+    qty: int
     
-    def __post_init__(self):
-        # Validate invariants
-        if self.amount < 0:
-            raise ValueError("Money cannot be negative")
-        if len(self.currency) != 3:
-            raise ValueError("Currency must be ISO 3-letter code")
-    
-    def add(self, other: "Money") -> "Money":
-        if self.currency != other.currency:
-            raise ValueError("Cannot add different currencies")
-        return Money(self.amount + other.amount, self.currency)
-    
-    def with_amount(self, new_amount: Decimal) -> "Money":
-        """Return new instance with modified amount"""
-        return Money(new_amount, self.currency)
-
-@dataclass(frozen=True)
-class ShoppingCart:
-    items: Tuple[ShoppingItem, ...] = field(default_factory=tuple)
-    customer_id: str | None = None
-    
-    def add_item(self, item: ShoppingItem) -> "ShoppingCart":
-        """Return new cart with item added (no mutation)"""
-        return ShoppingCart(
-            items=(*self.items, item),
-            customer_id=self.customer_id
-        )
+    def with_quantity(self, new_qty: int) -> "OrderLine":
+        """Return new instance with updated quantity"""
+        return OrderLine(orderid=self.orderid, sku=self.sku, qty=new_qty)
 ```
 
-## Boundary considerations:
-- Use Pydantic models ONLY at system boundaries (API inputs/outputs)
-- Convert Pydantic models to immutable value objects immediately after validation
-- Never pass Pydantic models into core domain logic
+Value objects follow functional programming principles:
+- Once created, their state never changes
+- Operations on value objects return new instances
+- They can be safely shared across threads
 
-## Testing strategy:
-- Test validation logic thoroughly in value object constructors
-- Verify immutability by attempting to modify instances
-- Test transformation methods produce new instances with expected changes
+Immutability verification test:
+```python
+def test_orderline_immutable():
+    """Verify value objects cannot be modified after creation"""
+    line = OrderLine(orderid="123", sku="BOOK", qty=2)
+    with pytest.raises(FrozenInstanceError):
+        line.qty = 3
+```
 
-## Anti-Patterns
-❌ `user.email = "new@ex.com"` — direct mutation of object state
-❌ `def process(items: list): items.append(...)` — side effect on input parameter
-❌ `{ "amount": 100, "currency": "USD" }` — untyped, mutable dictionary without validation
-❌ `@dataclass class MutableValue: value: int` — mutable dataclass without `frozen=True`
-❌ `def __init__(self, items=[]): self.items = items` — mutable default arguments
-❌ `from pydantic import BaseModel` — external dependencies in functional core logic
-❌ `cart.items.append(item)` — modifying internal collections directly
-❌ Using primitive types where domain concepts exist (string for email, int for money)
+Package location requirements:
+- Value objects must reside in the domain layer
+- No infrastructure dependencies allowed in value object modules
+
+Anti-patterns to avoid:
+❌ Domain/core objects importing infrastructure packages
+❌ Concrete implementations in domain layer
+❌ Infrastructure concerns leaking into application or domain layers
+
+**Verification:**
+- Code reviews must check for `@dataclass(frozen=True)` in domain models
+- Static analysis should flag mutable classes in domain layer
+- Unit tests should verify immutability where critical to business rules
+
+**Note:** This rule focuses specifically on immutable value objects in the core layer. General rules about the Functional Core (pure functions, no side effects) are defined in the "Functional Core & Imperative Shell" document. Thread safety and performance implications of immutability are implementation details to be considered during code review.

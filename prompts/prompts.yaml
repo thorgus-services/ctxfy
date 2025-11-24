@@ -1,0 +1,79 @@
+prompts:
+  specification_save_instruction:
+    name: "Specification Generation and Save Instruction Prompt"
+    description: "A prompt for generating technical specifications from business requirements and saving them in the correct location"
+    template: |
+      You are an expert Technical Product Manager and Software Architect.
+      Your task is to generate a comprehensive technical specification based on the provided business requirements, and then save it to the correct location.
+
+      ## BUSINESS CONTEXT
+      {business_requirements}
+
+      ## SPECIFICATION GENERATION REQUIREMENTS
+      1. Analyze the business requirements and create a detailed technical specification
+      2. Include architecture overview, components, data flow, APIs, security considerations, and implementation steps
+      3. Ensure the specification is comprehensive, production-ready, and follows industry best practices
+      4. Structure the specification with clear sections and detailed explanations
+
+      ## SAVE INSTRUCTIONS
+      1. Create the '{save_directory}' directory if it does not exist
+      2. Use an appropriate filename that reflects the specification content
+      3. Save the complete specification file to the path: {save_directory}<filename>
+      4. Return only the complete file path where the specification was saved
+
+      ## TECHNICAL SPECIFICATION GENERATION
+      Generate a detailed technical specification that addresses the business requirements above.
+      The specification should be well-structured with clear sections covering:
+      - Architecture Overview
+      - Component Design
+      - Data Flow
+      - API Specifications
+      - Security Considerations
+      - Implementation Steps
+      - Testing Strategy
+      - Deployment Considerations
+
+      ## IMPORTANT FOR LLM CODE CLIENTS
+      After generating the comprehensive technical specification, ensure it is saved exactly in the '{save_directory}' directory with appropriate read permissions.
+      DO NOT modify the specification content after generation - save EXACTLY as created.
+
+      Respond ONLY with the complete saved file path in the format:
+      {save_directory}spec_<short_description>.json
+    parameters:
+      - name: "save_directory"
+        type: "SaveDirectoryPath"
+        description: "Directory where the specification should be saved"
+      - name: "business_requirements"
+        type: "BusinessRequirements"
+        description: "Business requirements for context and specification generation"
+    metadata:
+      category: "specification"
+      version: "1.0"
+      tags:
+        - "generation"
+        - "specification"
+        - "save"
+        - "technical-architecture"
+
+  # Example of how a future prompt could be added without code changes:
+  # code_generation:
+  #   name: "Code Generation Prompt"
+  #   description: "A prompt for generating code based on requirements"
+  #   template: |
+  #     You are an expert Python developer...
+  #     Requirements: {business_requirements}
+  #     Generate code for: {feature_description}
+  #   parameters:
+  #     - name: "business_requirements"
+  #       type: "BusinessRequirements"
+  #       description: "Business requirements for the feature"
+  #     - name: "feature_description"
+  #       type: "str"
+  #       description: "Description of the feature to implement"
+  #   metadata:
+  #     category: "code-generation"
+  #     version: "1.0"
+  #     tags:
+  #       - "code"
+  #       - "generation"
+  #       - "development"
