@@ -14,83 +14,53 @@ C4Component
 
     Person(user, "Developer/Architect", "User who needs to generate technical specifications from business requirements")
 
-    System_Boundary(system, "Ctxfy Specification Generator") {
+    System_Boundary(ctxfy_system, "Ctxfy Specification Generator") {
         Component(mcp_server, "MCP Server", "FastMCP server that exposes tools and prompts", "FastMCP")
 
-        System_Boundary(core, "Functional Core (Pure Functions, No Side Effects)") {
+        System_Boundary(core, "Functional Core") {
             Component(use_case, "GenerateSpecificationUseCase", "Business logic for specification generation", "Python")
             Component(workflow, "SpecificationWorkflow", "Workflow for processing specification generation", "Python")
-
-            Container_Boundary(core_models, "Models") {
-                Component(spec_result, "SpecificationResult", "Immutable result object with ID, content, and filename", "Dataclass")
-                Component(spec_result_types, "Specification Types", "NewType definitions: SpecificationId, Content, Filename, DirectoryPath", "Types")
-                Component(spec_workflow_def, "SpecificationWorkflowDefinition", "Defines workflow parameters including requirements and save location", "Dataclass")
-                Component(business_req_type, "BusinessRequirements", "NewType for business requirements input", "Type")
-            }
-
-            Container_Boundary(core_ports, "Ports (Protocols/Interfaces)") {
-                Component(spec_generation_port, "SpecificationGenerationCommandPort", "Port for specification generation commands", "Protocol")
-                Component(spec_workflow_port, "SpecificationWorkflowPort", "Port for workflow execution", "Protocol")
-                Component(generic_prompt_port, "GenericPromptCommandPort", "Generic port for prompt commands", "Protocol")
-            }
+            Component(spec_result, "SpecificationResult", "Immutable result object", "Dataclass")
+            Component(spec_types, "Specification Types", "Type definitions", "NewType")
+            Component(business_req_type, "BusinessRequirements", "Business requirements type", "Type")
         }
 
-        System_Boundary(shell, "Imperative Shell (Side Effects & External Dependencies)") {
-            System_Boundary(adapters, "Adapters (Port Implementations)") {
-                Component(spec_tool, "SpecificationGenerationTool", "Implementation of specification generation port", "Python")
-                Component(yaml_loader, "YAMLPromptLoader", "Loads prompt templates from YAML files", "Python")
-                Component(generic_yaml_prompt, "GenericYAMLPrompt", "Generic YAML-based prompt implementation", "Python")
-            }
-
-            System_Boundary(orchestrators, "Orchestrators") {
-                Component(orchestrator, "MCPOrchestrator", "Coordinates tool registration and prompt management", "Python")
-            }
-
-            System_Boundary(registries, "Registries") {
-                Component(tool_registry, "ToolRegistry", "Manages registered tools", "Python")
-                Component(dynamic_prompt_registry, "DynamicPromptRegistry", "Dynamically registers prompts from YAML config", "Python")
-            }
+        System_Boundary(shell, "Imperative Shell") {
+            Component(spec_tool, "SpecificationGenerationTool", "Implementation of specification generation port", "Python")
+            Component(yaml_loader, "YAMLPromptLoader", "Loads prompt templates from YAML files", "Python")
+            Component(generic_yaml_prompt, "GenericYAMLPrompt", "Generic YAML-based prompt implementation", "Python")
+            Component(orchestrator, "MCPOrchestrator", "Coordinates tool registration and prompt management", "Python")
+            Component(tool_registry, "ToolRegistry", "Manages registered tools", "Python")
+            Component(dynamic_prompt_registry, "DynamicPromptRegistry", "Dynamically registers prompts from YAML config", "Python")
         }
 
-        Container_Boundary(prompts, "Prompts Configuration") {
-            Component(prompt_config, "prompts.yaml", "YAML configuration with prompt templates", "YAML")
-            Component(spec_save_instruction, "Specification Save Instruction", "Prompt template for generating and saving specifications", "YAML Template")
-        }
+        Component(prompt_config, "prompts.yaml", "YAML configuration with prompt templates", "YAML")
+        Component(external_llm, "External LLM", "Language model that processes prompts", "LLM")
     }
 
-    System_External(external_llm, "External LLM", "Language model that processes prompts and generates specifications")
+    Rel(user, mcp_server, "Uses", "HTTP/MCP protocol")
+    Rel(mcp_server, orchestrator, "Initialized by", "Dependency Injection")
 
-    Rel_R(user, mcp_server, "Uses", "HTTP/MCP protocol")
-    Rel_L(mcp_server, orchestrator, "Initialized by", "Dependency Injection")
+    Rel(orchestrator, tool_registry, "Configures", "Tool Management")
+    Rel(orchestrator, dynamic_prompt_registry, "Configures", "Dynamic Prompt Loading")
+    Rel(orchestrator, spec_tool, "Registers", "Tool Registration")
 
-    Rel_L(orchestrator, tool_registry, "Configures", "Tool Management")
-    Rel_R(orchestrator, dynamic_prompt_registry, "Configures", "Dynamic Prompt Loading")
-    Rel_L(orchestrator, spec_tool, "Registers", "Tool Registration")
+    Rel(tool_registry, spec_tool, "Registers", "Tool Registration")
+    Rel(spec_tool, use_case, "Delegates to", "Business Logic")
+    Rel(spec_tool, business_req_type, "Uses", "Business Requirements Type")
 
-    Rel_L(tool_registry, spec_generation_port, "Registers tools implementing", "Port Contract")
-    Rel_R(spec_tool, spec_generation_port, "Implements", "Port Contract")
-    Rel_R(spec_tool, use_case, "Delegates to", "Business Logic")
-    Rel_B(spec_tool, spec_workflow_def, "Uses", "Workflow Definition")
-    Rel_B(spec_tool, business_req_type, "Uses", "Business Requirements Type")
+    Rel(use_case, workflow, "Delegates to", "Workflow Logic")
+    Rel(workflow, spec_result, "Creates", "SpecificationResult")
+    Rel(workflow, business_req_type, "Uses", "Business Requirements Type")
 
-    Rel_L(use_case, workflow, "Delegates to", "Workflow Logic")
+    Rel(yaml_loader, prompt_config, "Loads from", "YAML File")
+    Rel(generic_yaml_prompt, yaml_loader, "Uses", "YAML Loading")
 
-    Rel_L(workflow, spec_workflow_port, "Implements", "Port Contract")
-    Rel_R(workflow, spec_result, "Creates", "SpecificationResult")
-    Rel_B(workflow, spec_result_types, "Uses", "Specification Types")
-    Rel_B(workflow, spec_workflow_def, "Uses", "Workflow Definition")
-    Rel_B(workflow, business_req_type, "Uses", "Business Requirements Type")
+    Rel(dynamic_prompt_registry, generic_yaml_prompt, "Creates dynamic functions for", "Generic Prompts")
+    Rel(dynamic_prompt_registry, yaml_loader, "Uses", "YAML Loading")
 
-    Rel_L(generic_yaml_prompt, generic_prompt_port, "Implements", "Port Contract")
-    Rel_R(generic_yaml_prompt, yaml_loader, "Uses", "YAML Loading")
-
-    Rel_L(yaml_loader, prompt_config, "Loads from", "YAML File")
-
-    Rel_L(dynamic_prompt_registry, generic_yaml_prompt, "Creates dynamic functions for", "Generic Prompts")
-    Rel_R(dynamic_prompt_registry, yaml_loader, "Uses", "YAML Loading")
-
-    Rel_R(mcp_server, external_llm, "Sends prompts to", "API Call")
-    Rel_L(external_llm, mcp_server, "Returns generated specification", "API Response")
+    Rel(mcp_server, external_llm, "Sends prompts to", "API Call")
+    Rel(external_llm, mcp_server, "Returns generated specification", "API Response")
 ```
 
 ## Architecture Overview
