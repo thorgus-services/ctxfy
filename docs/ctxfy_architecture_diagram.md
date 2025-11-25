@@ -13,21 +13,21 @@ C4Component
     title Ctxfy Architecture - Technical Specification Generation System
 
     Person(user, "Developer/Architect", "User who needs to generate technical specifications from business requirements")
-    
+
     System_Boundary(system, "Ctxfy Specification Generator") {
         Component(mcp_server, "MCP Server", "FastMCP server that exposes tools and prompts", "FastMCP")
-        
+
         System_Boundary(core, "Functional Core (Pure Functions, No Side Effects)") {
             Component(use_case, "GenerateSpecificationUseCase", "Business logic for specification generation", "Python")
             Component(workflow, "SpecificationWorkflow", "Workflow for processing specification generation", "Python")
-            
+
             Container_Boundary(core_models, "Models") {
                 Component(spec_result, "SpecificationResult", "Immutable result object with ID, content, and filename", "Dataclass")
                 Component(spec_result_types, "Specification Types", "NewType definitions: SpecificationId, Content, Filename, DirectoryPath", "Types")
                 Component(spec_workflow_def, "SpecificationWorkflowDefinition", "Defines workflow parameters including requirements and save location", "Dataclass")
                 Component(business_req_type, "BusinessRequirements", "NewType for business requirements input", "Type")
             }
-            
+
             Container_Boundary(core_ports, "Ports (Protocols/Interfaces)") {
                 Component(spec_generation_port, "SpecificationGenerationCommandPort", "Port for specification generation commands", "Protocol")
                 Component(spec_workflow_port, "SpecificationWorkflowPort", "Port for workflow execution", "Protocol")
@@ -60,65 +60,37 @@ C4Component
 
     System_External(external_llm, "External LLM", "Language model that processes prompts and generates specifications")
 
-    ' Core dependencies (dependencies flow inward: shell → core)
-    Rel(workflow, spec_workflow_port, "Implements", "Port Contract")
-    Rel(workflow, spec_result, "Creates", "SpecificationResult")
-    Rel(workflow, spec_result_types, "Uses", "Specification Types")
-    Rel(workflow, spec_workflow_def, "Uses", "Workflow Definition")
-    Rel(workflow, business_req_type, "Uses", "Business Requirements Type")
-    Rel(use_case, workflow, "Delegates to", "Workflow Logic")
-    
-    ' Shell dependencies
-    Rel(spec_tool, spec_generation_port, "Implements", "Port Contract")
-    Rel(spec_tool, use_case, "Delegates to", "Business Logic")
-    Rel(spec_tool, spec_workflow_def, "Uses", "Workflow Definition")
-    Rel(spec_tool, business_req_type, "Uses", "Business Requirements Type")
-    
-    Rel(generic_yaml_prompt, generic_prompt_port, "Implements", "Port Contract")
-    Rel(generic_yaml_prompt, yaml_loader, "Uses", "YAML Loading")
-    
-    Rel(yaml_loader, prompt_config, "Loads from", "YAML File")
-    
-    ' Orchestrator dependencies
-    Rel(orchestrator, spec_tool, "Registers", "Tool Registration")
-    Rel(orchestrator, dynamic_prompt_registry, "Configures", "Dynamic Prompt Loading")
-    Rel(orchestrator, tool_registry, "Uses", "Tool Management")
-    
-    ' Registry dependencies
-    Rel(tool_registry, spec_generation_port, "Registers tools implementing", "Port Contract")
-    Rel(dynamic_prompt_registry, generic_yaml_prompt, "Creates dynamic functions for", "Generic Prompts")
-    Rel(dynamic_prompt_registry, yaml_loader, "Uses", "YAML Loading")
-    
-    ' System integration
-    Rel(user, mcp_server, "Uses", "HTTP/MCP protocol")
-    Rel(mcp_server, orchestrator, "Initialized by", "Dependency Injection")
-    
-    ' External communication
-    Rel(mcp_server, external_llm, "Sends prompts to", "API Call")
-    Rel(external_llm, mcp_server, "Returns generated specification", "API Response")
-    
-    UpdateLayout({
-        "user": 0,
-        "mcp_server": 1,
-        "orchestrator": 2,
-        "tool_registry": 3,
-        "dynamic_prompt_registry": 4,
-        "spec_tool": 5,
-        "yaml_loader": 6,
-        "generic_yaml_prompt": 7,
-        "use_case": 8,
-        "workflow": 9,
-        "spec_result": 10,
-        "spec_result_types": 11,
-        "spec_workflow_def": 12,
-        "business_req_type": 13,
-        "spec_generation_port": 14,
-        "spec_workflow_port": 15,
-        "generic_prompt_port": 16,
-        "prompt_config": 17,
-        "spec_save_instruction": 18,
-        "external_llm": 19
-    })
+    Rel_R(user, mcp_server, "Uses", "HTTP/MCP protocol")
+    Rel_L(mcp_server, orchestrator, "Initialized by", "Dependency Injection")
+
+    Rel_L(orchestrator, tool_registry, "Configures", "Tool Management")
+    Rel_R(orchestrator, dynamic_prompt_registry, "Configures", "Dynamic Prompt Loading")
+    Rel_L(orchestrator, spec_tool, "Registers", "Tool Registration")
+
+    Rel_L(tool_registry, spec_generation_port, "Registers tools implementing", "Port Contract")
+    Rel_R(spec_tool, spec_generation_port, "Implements", "Port Contract")
+    Rel_R(spec_tool, use_case, "Delegates to", "Business Logic")
+    Rel_B(spec_tool, spec_workflow_def, "Uses", "Workflow Definition")
+    Rel_B(spec_tool, business_req_type, "Uses", "Business Requirements Type")
+
+    Rel_L(use_case, workflow, "Delegates to", "Workflow Logic")
+
+    Rel_L(workflow, spec_workflow_port, "Implements", "Port Contract")
+    Rel_R(workflow, spec_result, "Creates", "SpecificationResult")
+    Rel_B(workflow, spec_result_types, "Uses", "Specification Types")
+    Rel_B(workflow, spec_workflow_def, "Uses", "Workflow Definition")
+    Rel_B(workflow, business_req_type, "Uses", "Business Requirements Type")
+
+    Rel_L(generic_yaml_prompt, generic_prompt_port, "Implements", "Port Contract")
+    Rel_R(generic_yaml_prompt, yaml_loader, "Uses", "YAML Loading")
+
+    Rel_L(yaml_loader, prompt_config, "Loads from", "YAML File")
+
+    Rel_L(dynamic_prompt_registry, generic_yaml_prompt, "Creates dynamic functions for", "Generic Prompts")
+    Rel_R(dynamic_prompt_registry, yaml_loader, "Uses", "YAML Loading")
+
+    Rel_R(mcp_server, external_llm, "Sends prompts to", "API Call")
+    Rel_L(external_llm, mcp_server, "Returns generated specification", "API Response")
 ```
 
 ## Architecture Overview
