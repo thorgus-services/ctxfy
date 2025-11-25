@@ -8,13 +8,20 @@
 
 **Standardizes and automates developer-AI interaction through the Model Context Protocol (MCP).**
 
-Ctxfy is an enterprise Context Engineering MCP Server that standardizes and automates the interaction between developers and AI agents. By implementing the Model Context Protocol (MCP) specification, Ctxfy transforms ad-hoc prompts into **repeatable, auditable, and scalable** software development processes.
+Ctxfy is an enterprise Context Engineering MCP Server that standardizes and automates the interaction between developers and AI agents. Currently focused on technical specification generation from business requirements, with a roadmap to implement the full vision of context engineering. By implementing the Model Context Protocol (MCP) specification, Ctxfy transforms ad-hoc prompts into **repeatable, auditable, and scalable** software development processes.
 
-## 🚀 Features
+## 🚀 Current Features
+
+- **Technical Specification Generation**: AI-powered generation of technical specifications from business requirements
+- **YAML-based Prompt Configuration**: Flexible prompt templates defined in YAML files
+- **MCP Protocol Compliance**: Native integration with LLMs via HTTP transport
+- **Dynamic Prompt Registration**: Automatic registration of prompts from YAML configuration
+- **Functional Core/Imperative Shell Architecture**: Clean separation of business logic and side effects
+
+## 🚀 Future Vision
 
 - **Standardized Context Stacks**: 5 structured layers ensuring consistent AI interactions
-- **PRP Automation**: Automated generation of Product Requirements Prompts 
-- **MCP Protocol Compliance**: Native integration with LLMs via HTTP transport
+- **PRP Automation**: Automated generation of Product Requirements Prompts
 - **Dynamic RAG Integration**: Real-time updated context with knowledge retrieval
 - **Enterprise Security**: Security controls and audit trails
 
@@ -22,17 +29,19 @@ Ctxfy is an enterprise Context Engineering MCP Server that standardizes and auto
 
 Ctxfy follows a **Functional Core, Imperative Shell** architecture with MCP Protocol compliance:
 
-- **Functional Core**: Pure context transformation logic with no side effects
-- **Imperative Shell**: Handles MCP communication and I/O operations
-- **Hexagonal Architecture**: Ports and adapters pattern for clean separation
+- **Functional Core**: Pure specification generation logic with no side effects
+- **Imperative Shell**: Handles MCP communication, YAML loading, and I/O operations
+- **Ports and Adapters**: Protocol-based interfaces for clean separation of concerns
 - **Immutable Models**: All data classes are frozen for predictable state
+
+The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_architecture_diagram.md).
 
 ## 🛠️ Tech Stack
 
 - **Language**: Python 3.13+
 - **Framework**: FastMCP for Model Context Protocol implementation
-- **Architecture**: Hexagonal with Functional Core, Imperative Shell
-- **Tools**: Poetry (dependencies), Ruff (formatting), MyPy (type checking)
+- **Architecture**: Functional Core/Imperative Shell (FCIS) with Ports and Adapters
+- **Tools**: Poetry (dependencies), Ruff (formatting), MyPy (type checking), Tox (testing)
 - **Protocol**: Model Context Protocol (MCP) with HTTP transport
 
 ## 🚀 Getting Started
@@ -53,58 +62,57 @@ Ctxfy follows a **Functional Core, Imperative Shell** architecture with MCP Prot
    poetry shell
    ```
 
-2. **Run the server:**
-   ```bash
-   python -m src.app.main
-   ```
+## 🧪 Development Commands
+
+The project uses Tox for development workflows:
+
+- **Run linting**: `tox -e lint`
+- **Apply code formatting**: `tox -e format`
+- **Run type checking**: `tox -e type`
+- **Run unit tests**: `tox -e unit`
+- **Run integration tests**: `tox -e integration`
+- **Run security checks**: `tox -e security`
+- **Run compliance validation**: `tox -e compliance`
+- **Run development server**: `tox -e serve`
+- **Run all checks**: `tox`
 
 ### Quick Start
 
 Start the MCP server and integrate with your AI tools:
 
 ```bash
+# Using Tox (recommended for development)
+tox -e serve
+
 # Direct execution
-python -m src.app.main
-
-# Or with Poetry
-poetry run python -m src.app.main
+python -m src.app
 ```
 
-**Alternative: Using Docker**
+The server runs on `http://127.0.0.1:8000` by default.
 
-```bash
-# Build and run with Docker Compose
-docker-compose up --build
-
-# Or run with Docker directly
-docker build -t ctxfy .
-docker run -p 8000:8000 ctxfy
-```
-
-The server runs on `http://127.0.0.1:8000/mcp` by default.
-
-## 🛠️ Usage
+## 🛠️ Current Usage
 
 ### Main Entrypoint
 
 The primary entrypoint is:
 ```bash
-python -m src.app.main
+python -m src.app
 ```
 
 ### MCP Integration
 
-The server provides the `generate_context_stack` tool via MCP protocol:
+The server currently provides the `generate_specification` tool via MCP protocol:
 ```json
 {
-  "name": "generate_context_stack",
+  "name": "generate_specification",
+  "description": "Generates technical specifications from business requirements",
   "arguments": {
-    "feature_description": "User authentication feature",
-    "target_technologies": ["Python", "MCP"],
-    "custom_rules": []
+    "business_requirements": "Describe the feature or system to be specified"
   }
 }
 ```
+
+The `specification_save_instruction` prompt is also available for generating comprehensive technical specifications.
 
 ### Configuration
 
@@ -114,60 +122,30 @@ Set via environment variables:
 - `SERVER_PORT`: Port (default: 8000)
 - `MCP_TRANSPORT`: Transport protocol (default: http)
 
-## 🔐 Authentication
-
-The Ctxfy MCP Server requires API key authentication for all requests. You can use the following methods to manage API keys:
-
-### Creating API Keys
-
-The server provides the `create-api-key` tool via MCP protocol:
-```json
-{
-  "name": "create-api-key",
-  "arguments": {
-    "user_id": "your-user-id",
-    "scope": "read",  // or "write", "admin"
-    "ttl_hours": 24   // optional, time-to-live in hours
-  }
-}
-```
-
-This will return a new API key that you can use for authentication.
-
-### Using API Keys
-
-Include your API key in requests using one of these header formats:
-- `Authorization: Bearer <api-key>`
-- `X-API-Key: <api-key>`
-- `API-Key: <api-key>`
-
-### Default Behavior
-
-If no authentication is provided, the server will reject the request unless configured otherwise.
-
 ## 🌐 Qwen Code Integration
 
 1. **Install Qwen Code extension** in VS Code.
 
-2. **Create configuration** (`qwen-config.json`):
+2. **Copy the example configuration** from `examples/qwen-config.json` to your workspace or user settings:
    ```json
    {
-     "tools": {
-       "ctxfy-server": {
-         "command": ["poetry", "run", "python", "-m", "src.app.main"],
-         "env": {
-           "DEBUG": "true"
+     "mcpServers": {
+       "context-engineering": {
+         "httpUrl": "http://127.0.0.1:8000/mcp",  // MCP protocol endpoint
+         "headers": {
+           "Content-Type": "application/json",
+           "Authorization": "Bearer YOUR_API_KEY_HERE"  // Replace with your actual API key
          },
-         "cwd": ".",
-         "timeout": 30
+         "timeout": 30000,
+         "trust": false
        }
      }
    }
    ```
 
-3. **Start the server**:
+3. **Start the server** using Tox:
    ```bash
-   poetry run python -m src.app.main
+   tox -e serve
    ```
 
 4. **Use MCP tools** in Qwen Code interface.
@@ -176,9 +154,9 @@ If no authentication is provided, the server will reject the request unless conf
 
 1. Fork the repository
 2. Create a feature branch
-3. Make changes following architectural principles
+3. Make changes following FCIS architectural principles
 4. Write tests using TDD
-5. Run tests: `poetry run pytest`
+5. Run quality checks: `tox`
 6. Open a Pull Request
 
 ## 📄 License
