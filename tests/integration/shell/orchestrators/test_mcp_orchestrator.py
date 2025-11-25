@@ -1,23 +1,23 @@
 from unittest.mock import Mock
 
-from src.shell.orchestrators.specification_orchestrator import SpecificationOrchestrator
+from src.shell.orchestrators.mcp_orchestrator import MCPOrchestrator
 
 
-def test_specification_orchestrator_initialization():
-    """Test SpecificationOrchestrator initialization and component setup"""
+def test_mcp_orchestrator_initialization():
+    """Test MCPOrchestrator initialization and component setup"""
     mock_mcp = Mock()
 
-    orchestrator = SpecificationOrchestrator(mock_mcp)
+    orchestrator = MCPOrchestrator(mock_mcp)
 
     assert hasattr(orchestrator, 'mcp')
     assert orchestrator.mcp is mock_mcp
 
 
-def test_specification_orchestrator_components_registration():
-    """Test that SpecificationOrchestrator properly registers tools and prompts"""
+def test_mcp_orchestrator_components_registration():
+    """Test that MCPOrchestrator properly registers tools and prompts"""
     mock_mcp = Mock()
 
-    SpecificationOrchestrator(mock_mcp)
+    MCPOrchestrator(mock_mcp)
 
     tool_calls = [call for call in mock_mcp.method_calls if call[0] == 'tool']
     prompt_calls = [call for call in mock_mcp.method_calls if call[0] == 'prompt']
@@ -26,11 +26,11 @@ def test_specification_orchestrator_components_registration():
     assert len(prompt_calls) >= 1
 
 
-def test_specification_orchestrator_integration_with_real_components():
+def test_mcp_orchestrator_integration_with_real_components():
     """Integration test with real components (not mocks)"""
     mock_mcp = Mock()
 
-    SpecificationOrchestrator(mock_mcp)
+    MCPOrchestrator(mock_mcp)
 
     tool_registered = any(call[0] == 'tool' for call in mock_mcp.method_calls)
     prompt_registered = any(call[0] == 'prompt' for call in mock_mcp.method_calls)

@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from .shell.orchestrators.specification_orchestrator import SpecificationOrchestrator
+from .shell.orchestrators.mcp_orchestrator import MCPOrchestrator
 
 
 def create_mcp_server() -> FastMCP:
@@ -9,7 +9,7 @@ def create_mcp_server() -> FastMCP:
         version="1.0.0",
     )
 
-    SpecificationOrchestrator(mcp)
+    MCPOrchestrator(mcp)
 
     return mcp
 
