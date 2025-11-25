@@ -30,11 +30,11 @@ jobs:
     - name: Install Poetry
       run: pip install poetry
 
-    - name: Install dependencies
-      run: poetry install --no-interaction
+    - name: Install dependencies with dev group
+      run: poetry install --with dev --no-interaction
 
     - name: Run all validations with Tox
-      run: tox
+      run: poetry run tox
 
     - name: Build Package
       run: poetry build
