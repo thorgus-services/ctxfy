@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 from fastmcp import Context, FastMCP
 
@@ -9,25 +9,16 @@ from src.shell.adapters.prompt_loaders.yaml_prompt_loader import YAMLPromptLoade
 
 
 class DynamicPromptRegistry:
-    """
-    Registry that dynamically creates and registers prompts from YAML configuration.
-    This allows registration of prompts with specific parameter signatures instead of using **kwargs,
-    which is not supported by FastMCP for schema generation.
-    """
-
-    def __init__(self, prompts_directory: Optional[str] = None):
+    def __init__(self) -> None:
         self._prompts: Dict[str, Any] = {}
-        self._yaml_loader = YAMLPromptLoader(prompts_directory)
+        self._yaml_loader = YAMLPromptLoader()
         self._registered_functions: Dict[str, Callable[..., Any]] = {}
 
     def load_and_register_all_prompts(self, mcp: FastMCP) -> None:
-        """
-        Load all prompts from the YAML configuration and register them with FastMCP.
-        """
-        all_prompts_data = self._yaml_loader._all_prompts_data
+        all_prompts_data = self._yaml_loader.all_prompts_data
         if all_prompts_data is None:
-            _ = self._yaml_loader.load_prompt_template("specification_save_instruction")
-            all_prompts_data = self._yaml_loader._all_prompts_data
+            self._yaml_loader.load_prompt_template("specification_save_instruction")
+            all_prompts_data = self._yaml_loader.all_prompts_data
 
         if not all_prompts_data:
             return
@@ -36,9 +27,6 @@ class DynamicPromptRegistry:
             self._create_and_register_prompt(mcp, prompt_name, prompt_config)
 
     def _create_and_register_prompt(self, mcp: FastMCP, prompt_name: str, prompt_config: Dict[str, Any]) -> None:
-        """
-        Create and register a specific prompt with FastMCP using its defined parameters.
-        """
         parameters: list[dict[str, Any]] = prompt_config.get('parameters', [])
 
         func = self._create_dynamic_function(prompt_name, prompt_config, parameters)
@@ -54,9 +42,6 @@ class DynamicPromptRegistry:
         )(func)
 
     def _create_dynamic_function(self, prompt_name: str, prompt_config: Dict[str, Any], parameters: list[dict[str, Any]]) -> Callable[..., Any]:
-        """
-        Create a function with specific parameters based on the prompt configuration.
-        """
         template = prompt_config.get('template', '')
 
         async def dynamic_prompt_impl(ctx: Context, *args: Any, **kwargs: Any) -> str:
@@ -159,4 +144,4 @@ class DynamicPromptRegistry:
         return dynamic_prompt_impl
 
 
-dynamic_prompt_registry = DynamicPromptRegistry()
+dynamic_prompt_registry: DynamicPromptRegistry = DynamicPromptRegistry()

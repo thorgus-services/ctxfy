@@ -9,14 +9,13 @@ from src.core.workflows.specification_workflow import SpecificationWorkflow
 
 
 def test_specification_workflow_protocol_implementation():
-    """Test the SpecificationWorkflow class that implements the protocol"""
     workflow = SpecificationWorkflow()
-    
+
     workflow_def = SpecificationWorkflowDefinition(
         requirements=BusinessRequirements("User needs dashboard for metrics"),
         save_directory=SaveDirectoryPath("ctxfy/specifications/")
     )
-    
+
     result = workflow.execute(workflow_def)
 
     assert isinstance(result, SpecificationResult)

@@ -11,7 +11,6 @@ from src.core.workflows.specification_workflow import execute_specification_work
 
 
 def test_specification_workflow_process_with_valid_requirements():
-    """Test the specification workflow with valid requirements"""
     workflow_def = SpecificationWorkflowDefinition(
         requirements=BusinessRequirements("User needs dashboard for metrics"),
         save_directory=SaveDirectoryPath("ctxfy/specifications/")

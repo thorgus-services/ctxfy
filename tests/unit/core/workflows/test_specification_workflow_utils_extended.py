@@ -12,7 +12,6 @@ from src.core.workflows.specification_workflow import (
 
 
 def test_clean_business_requirements_various_scenarios():
-    """Test _clean_business_requirements with various input scenarios"""
     result = _clean_business_requirements(BusinessRequirements("User needs dashboard!@#$%^&*()"))
     assert result == "User needs dashboard()"
 

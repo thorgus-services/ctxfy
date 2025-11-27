@@ -16,7 +16,6 @@ from src.shell.adapters.tools.specification_generation_tool import (
 
 @pytest.mark.asyncio
 async def test_execute_with_valid_requirements():
-    """Test execution of tool with valid requirements"""
     mock_use_case = MagicMock(spec=GenerateSpecificationUseCase)
     mock_result = SpecificationResult(
         id=SpecificationId("test-id-123"),

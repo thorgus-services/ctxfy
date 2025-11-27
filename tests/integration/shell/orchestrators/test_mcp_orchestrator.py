@@ -4,7 +4,6 @@ from src.shell.orchestrators.mcp_orchestrator import MCPOrchestrator
 
 
 def test_mcp_orchestrator_initialization():
-    """Test MCPOrchestrator initialization and component setup"""
     mock_mcp = Mock()
 
     orchestrator = MCPOrchestrator(mock_mcp)
@@ -14,7 +13,6 @@ def test_mcp_orchestrator_initialization():
 
 
 def test_mcp_orchestrator_components_registration():
-    """Test that MCPOrchestrator properly registers tools and prompts"""
     mock_mcp = Mock()
 
     MCPOrchestrator(mock_mcp)

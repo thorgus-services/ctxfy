@@ -5,7 +5,6 @@ from src.core.use_cases.generate_specification import GenerateSpecificationUseCa
 
 
 def test_generate_specification_with_valid_requirements():
-    """Test specification generation with valid requirements"""
     use_case = GenerateSpecificationUseCase()
     result = use_case.execute(BusinessRequirements("User precisa de dashboard para métricas"))
 
@@ -17,7 +16,6 @@ def test_generate_specification_with_valid_requirements():
 
 
 def test_generate_specification_with_empty_requirements():
-    """Test handling of empty requirements"""
     use_case = GenerateSpecificationUseCase()
     with pytest.raises(ValueError):
         use_case.execute(BusinessRequirements(""))

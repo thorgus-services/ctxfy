@@ -11,7 +11,6 @@ from src.core.models.specification_result import (
 
 
 def test_specification_result_immutability():
-    """Test that the value object is immutable"""
     result = SpecificationResult(
         id=SpecificationId("test-123"),
         content=SpecificationContent("conteúdo original"),

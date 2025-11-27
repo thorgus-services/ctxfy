@@ -5,21 +5,19 @@ from src.shell.registry.tool_registry import ToolRegistry
 
 
 def test_tool_registry_initialization():
-    """Test ToolRegistry initialization"""
     registry = ToolRegistry()
-    
+
     assert hasattr(registry, '_tools')
     assert isinstance(registry._tools, dict)
     assert len(registry._tools) == 0
 
 
 def test_tool_registry_register_tool():
-    """Test register_tool method"""
     registry = ToolRegistry()
-    
+
     # Create a mock tool
     mock_tool = Mock(spec=SpecificationGenerationCommandPort)
-    
+
     # Register the tool
     registry.register_tool("test_tool", mock_tool)
     
