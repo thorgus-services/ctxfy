@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional
 import yaml
 
 from src.core.ports.prompt_ports import PromptLoaderPort
-from src.core.settings import Settings
 from src.core.utils.path_utils import get_project_root
+from src.settings import Settings
 from src.shell.utils.retry_utils import execute_with_retry
 
 
