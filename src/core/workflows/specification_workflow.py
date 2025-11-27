@@ -20,11 +20,13 @@ from ..ports.specification_ports import SpecificationWorkflowPort
 
 class SpecificationWorkflow(SpecificationWorkflowPort):
     def execute(self, workflow_definition: SpecificationWorkflowDefinition) -> SpecificationResult:
-        return execute_specification_workflow(workflow_definition)
+        created_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        return execute_specification_workflow(workflow_definition, created_at)
 
 
 def execute_specification_workflow(
-    workflow_definition: SpecificationWorkflowDefinition
+    workflow_definition: SpecificationWorkflowDefinition,
+    created_at: str = ""
 ) -> SpecificationResult:
     if not _validate_business_requirements(workflow_definition.requirements):
         raise ValueError("Business requirements cannot be empty or invalid")
@@ -32,7 +34,7 @@ def execute_specification_workflow(
     cleaned_requirements = _clean_business_requirements(workflow_definition.requirements)
     spec_id = _generate_specification_id(cleaned_requirements)
     filename = _generate_specification_filename(cleaned_requirements)
-    content = _format_specification_content(cleaned_requirements, str(workflow_definition.save_directory))
+    content = _format_specification_content(cleaned_requirements, str(workflow_definition.save_directory), created_at)
 
     return SpecificationResult(
         id=spec_id,
@@ -93,7 +95,7 @@ def _generate_acceptance_criteria(requirements: str) -> list[str]:
     return criteria
 
 
-def _format_specification_content(requirements: str, save_directory: str = "ctxfy/specifications/") -> SpecificationContent:
+def _format_specification_content(requirements: str, save_directory: str = "ctxfy/specifications/", created_at: str = "") -> SpecificationContent:
     components = _extract_components_from_requirements(requirements, save_directory)
 
     content_str = json.dumps({
@@ -105,7 +107,7 @@ def _format_specification_content(requirements: str, save_directory: str = "ctxf
         "interfaces": ["REST API", "Message Queue"],
         "security": ["Authentication", "Authorization", "Data Encryption"],
         "acceptance_criteria": _generate_acceptance_criteria(requirements),
-        "created_at": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        "created_at": created_at
     }, indent=2, ensure_ascii=False)
 
     return SpecificationContent(content_str)
@@ -113,10 +115,11 @@ def _format_specification_content(requirements: str, save_directory: str = "ctxf
 
 def execute_specification_generation(
     requirements: BusinessRequirements,
-    save_directory: str = "ctxfy/specifications/"
+    save_directory: str = "ctxfy/specifications/",
+    created_at: str = ""
 ) -> SpecificationResult:
     workflow_def = SpecificationWorkflowDefinition(
         requirements=requirements,
         save_directory=SaveDirectoryPath(save_directory)
     )
-    return execute_specification_workflow(workflow_def)
+    return execute_specification_workflow(workflow_def, created_at)

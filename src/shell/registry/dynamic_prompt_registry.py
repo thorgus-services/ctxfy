@@ -44,6 +44,17 @@ class DynamicPromptRegistry:
     def _create_dynamic_function(self, prompt_name: str, prompt_config: Dict[str, Any], parameters: list[dict[str, Any]]) -> Callable[..., Any]:
         template = prompt_config.get('template', '')
 
+        dynamic_prompt_impl = self._create_prompt_implementation(prompt_name, template, parameters)
+
+        sig = self._build_signature(parameters)
+        dynamic_prompt_impl.__signature__ = sig  # type: ignore[attr-defined]
+
+        annotations = self._build_annotations(parameters)
+        dynamic_prompt_impl.__annotations__ = annotations
+
+        return dynamic_prompt_impl
+
+    def _create_prompt_implementation(self, prompt_name: str, template: str, parameters: list[dict[str, Any]]) -> Callable[..., Any]:
         async def dynamic_prompt_impl(ctx: Context, *args: Any, **kwargs: Any) -> str:
             param_values: Dict[str, Any] = {}
 
@@ -66,6 +77,9 @@ class DynamicPromptRegistry:
             except KeyError as e:
                 raise ValueError(f"Missing required parameter {e} for prompt {prompt_name}") from e
 
+        return dynamic_prompt_impl
+
+    def _build_signature(self, parameters: list[dict[str, Any]]) -> inspect.Signature:
         sig_params = []
 
         ctx_param = inspect.Parameter(
@@ -116,9 +130,9 @@ class DynamicPromptRegistry:
             )
             sig_params.append(param_spec)
 
-        sig = inspect.Signature(sig_params)
-        dynamic_prompt_impl.__signature__ = sig  # type: ignore[attr-defined]
+        return inspect.Signature(sig_params)
 
+    def _build_annotations(self, parameters: list[dict[str, Any]]) -> dict[str, Any]:
         annotations = {'ctx': Context, 'return': str}
         for param in parameters:
             param_name = param.get('name', '')
@@ -139,9 +153,7 @@ class DynamicPromptRegistry:
 
             annotations[param_name] = param_type_for_annotation
 
-        dynamic_prompt_impl.__annotations__ = annotations
-
-        return dynamic_prompt_impl
+        return annotations
 
 
 dynamic_prompt_registry: DynamicPromptRegistry = DynamicPromptRegistry()

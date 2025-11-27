@@ -5,5 +5,5 @@ from ..workflows.specification_workflow import execute_specification_generation
 
 
 class GenerateSpecificationUseCase:
-    def execute(self, business_requirements: BusinessRequirements) -> SpecificationResult:
-        return execute_specification_generation(business_requirements)
+    def execute(self, business_requirements: BusinessRequirements, created_at: str = "") -> SpecificationResult:
+        return execute_specification_generation(business_requirements, created_at=created_at)

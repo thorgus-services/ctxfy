@@ -62,6 +62,21 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
    poetry shell
    ```
 
+2. **Configure environment variables:**
+   Copy the example environment file and customize it for your needs:
+   ```bash
+   cp example.env .env
+   # Edit .env with your specific configuration
+   ```
+
+   The following environment variables are available:
+   - `PROMPTS_FILE_PATH`: Path to the prompts configuration file (default: `resources/prompts.yaml`)
+   - `DEBUG`: Enable debug mode (set to 1 to enable, default: 0)
+   - `SERVER_HOST`: Host address for the server (default: `127.0.0.1`)
+   - `SERVER_PORT`: Port number for the server (default: `8000`)
+   - `MCP_TRANSPORT`: Transport protocol for MCP (default: `http`)
+   - `API_KEY`: Optional API key for authentication (if required)
+
 ## 🧪 Development Commands
 
 The project uses Tox for development workflows:

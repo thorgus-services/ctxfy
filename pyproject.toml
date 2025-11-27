@@ -36,6 +36,7 @@ markers = [
     "integration: Integration tests (with real/fake adapters)",
     "slow: Tests that take more than 1 second"
 ]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["src"]

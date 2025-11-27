@@ -6,6 +6,7 @@ import yaml
 from src.core.ports.prompt_ports import PromptLoaderPort
 from src.core.settings import Settings
 from src.core.utils.path_utils import get_project_root
+from src.shell.utils.retry_utils import execute_with_retry
 
 
 class YAMLPromptLoader(PromptLoaderPort):
@@ -30,12 +31,18 @@ class YAMLPromptLoader(PromptLoaderPort):
             if not os.path.exists(self.prompts_file_path):
                 return None
 
-            with open(self.prompts_file_path, 'r', encoding='utf-8') as file:
-                all_data: Any = yaml.safe_load(file)
+            def load_yaml_file() -> Any:
+                with open(self.prompts_file_path, 'r', encoding='utf-8') as file:
+                    return yaml.safe_load(file)
+
+            try:
+                all_data: Any = execute_with_retry(load_yaml_file)
                 if isinstance(all_data, dict) and 'prompts' in all_data:
                     self._all_prompts_data = all_data['prompts']
                     for name, config in self._all_prompts_data.items():
                         self._loaded_prompts[name] = config
+            except Exception:
+                return None
 
         if self._all_prompts_data and prompt_name in self._all_prompts_data:
             self._loaded_prompts[prompt_name] = self._all_prompts_data[prompt_name]
