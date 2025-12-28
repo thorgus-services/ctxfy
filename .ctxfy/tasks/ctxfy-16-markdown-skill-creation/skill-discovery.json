@@ -1,0 +1,23 @@
+{
+  "task_id": "ctxfy-16-markdown-skill-creation",
+  "task_title": "Markdown Skill Creation",
+  "task_summary": "Create a specialized skill for processing Markdown files with Python, implementing operations like reading/parsing, element extraction, content transformation, and document analysis. The skill should include scripts for various Markdown operations, proper documentation, and follow Agent Skills specifications with support for CommonMark, frontmatter handling, and structured content manipulation.",
+  "task_type": "skill-development",
+  "domain_keywords": ["markdown", "python", "document-processing", "content-manipulation", "text-parsing"],
+  "discovered_skills": [
+    {
+      "skill_path": ".ctxfy/skills/skill-creator/SKILL.md",
+      "name": "skill-creator",
+      "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Model's capabilities with specialized knowledge, workflows, or tool integrations.",
+      "score": 85,
+      "relevance_factors": [
+        "Skill creation guidance directly relevant to task",
+        "Provides framework for creating markdown-processing skill",
+        "Contains detailed instructions for skill anatomy and structure"
+      ]
+    }
+  ],
+  "context_budget_used": 47,
+  "context_budget_remaining": 73,
+  "fallback_strategy": "proceed_without_skills"
+}
