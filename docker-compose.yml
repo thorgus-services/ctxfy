@@ -7,7 +7,6 @@ services:
     environment:
       - PROMPTS_FILE_PATH=resources/prompts.yaml
       - LOG_LEVEL=INFO
-      - WORKSPACE_DIR=/workspace
     volumes:
       - ${PWD}:/workspace:rw
     # STDIO transport is handled via stdin/stdout, so no ports exposed for typical HTTP

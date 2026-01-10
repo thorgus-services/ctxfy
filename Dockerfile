@@ -58,6 +58,9 @@ RUN chown -R appuser:appuser /app
 # Create workspace directory with appropriate permissions
 RUN mkdir -p /workspace && chown -R appuser:appuser /workspace
 
+# Set default environment variable for workspace directory
+ENV WORKSPACE_DIR=/workspace
+
 # Switch to non-root user
 USER appuser
 

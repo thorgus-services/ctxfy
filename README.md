@@ -8,54 +8,40 @@
 
 **Standardizes and automates developer-AI interaction through the Model Context Protocol (MCP).**
 
-Ctxfy is an enterprise Context Engineering MCP Server that standardizes and automates the interaction between developers and AI agents. Currently focused on technical specification generation from business requirements, with a roadmap to implement the full vision of context engineering. By implementing the Model Context Protocol (MCP) specification with STDIO transport, Ctxfy transforms ad-hoc prompts into **repeatable, auditable, and scalable** software development processes.
+Ctxfy standardizes and automates interaction between developers and AI agents. It generates technical specifications from business requirements using the Model Context Protocol (MCP) with STDIO transport, transforming ad-hoc prompts into **repeatable, auditable, and scalable** processes.
 
-## 🚀 Current Features
+## 🚀 Features
 
-- **Technical Specification Generation**: AI-powered generation of technical specifications from business requirements
-- **YAML-based Prompt Configuration**: Flexible prompt templates defined in YAML files
+- **Technical Specification Generation**: AI-powered generation from business requirements
+- **YAML-based Prompt Configuration**: Flexible templates in YAML files
 - **MCP Protocol Compliance**: Native integration with LLMs via STDIO transport
-- **Dynamic Prompt Registration**: Automatic registration of prompts from YAML configuration
-- **Functional Core/Imperative Shell Architecture**: Clean separation of business logic and side effects
-
-## 🚀 Future Vision
-
-- **Standardized Context Stacks**: 5 structured layers ensuring consistent AI interactions
-- **PRP Automation**: Automated generation of Product Requirements Prompts
-- **Dynamic RAG Integration**: Real-time updated context with knowledge retrieval
-- **Enterprise Security**: Security controls and audit trails
+- **Dynamic Prompt Registration**: Automatic registration from YAML configuration
+- **Functional Architecture**: Clean separation of business logic and side effects
 
 ## 🏗️ Architecture
 
-Ctxfy follows a **Functional Core, Imperative Shell** architecture with MCP Protocol compliance:
+**Functional Core, Imperative Shell** architecture with MCP Protocol compliance:
 
-- **Functional Core**: Pure specification generation logic with no side effects
+- **Functional Core**: Pure specification generation logic (no side effects)
 - **Imperative Shell**: Handles MCP communication, YAML loading, and I/O operations
 - **Ports and Adapters**: Protocol-based interfaces for clean separation of concerns
-- **Immutable Models**: All data classes are frozen for predictable state
-
-The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_architecture_diagram.md).
 
 ## 🛠️ Tech Stack
 
 - **Language**: Python 3.13+
-- **Framework**: FastMCP for Model Context Protocol implementation
-- **Architecture**: Functional Core/Imperative Shell (FCIS) with Ports and Adapters
-- **Tools**: Poetry (dependencies), Ruff (formatting), MyPy (type checking), Tox (testing)
-- **Protocol**: Model Context Protocol (MCP) with STDIO transport
+- **Framework**: FastMCP for Model Context Protocol
+- **Tools**: Poetry, Ruff, MyPy, Tox
+- **Protocol**: MCP with STDIO transport
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Python 3.13+** (for development)
-- **Docker** (for containerized deployment)
-- **Poetry** (dependency manager)
-- **Git**
+- **Python 3.13+**, **Docker**, **Poetry**, **Git**
 
 ### Installation
 
-1. **Clone and install:**
+1. Clone and install:
    ```bash
    git clone https://github.com/your-username/ctxfy.git
    cd ctxfy
@@ -63,138 +49,80 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
    poetry shell
    ```
 
-2. **Configure environment variables:**
-   Copy the example environment file and customize it for your needs:
+2. Configure environment variables:
    ```bash
    cp example.env .env
-   # Edit .env with your specific configuration
+   # Edit .env with your configuration
    ```
 
-   The following environment variables are available:
-   - `PROMPTS_FILE_PATH`: Path to the prompts configuration file (default: `resources/prompts.yaml`)
-   - `DEBUG`: Enable debug mode (set to 1 to enable, default: 0)
-
-### Docker Deployment
-
-Ctxfy can be deployed as a Docker container for consistent environments and easy deployment:
-
-1. **Build the Docker image:**
-   ```bash
-   docker build -t ctxfy-mcp:latest .
-   ```
-
-2. **Run the container with STDIO transport:**
-   ```bash
-   docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
-   ```
-
-3. **Using Docker Compose:**
-   ```bash
-   # Set environment variables
-   export WORKSPACE_DIR=$(pwd)/workspace
-
-   # Start the service
-   docker-compose up ctxfy-mcp
-   ```
-
-4. **Development with Docker Compose:**
-   ```bash
-   docker-compose up --build
-   ```
-
-## 🧪 Development Commands
-
-The project uses Tox for development workflows:
-
-- **Run linting**: `tox -e lint`
-- **Apply code formatting**: `tox -e format`
-- **Run type checking**: `tox -e type`
-- **Run unit tests**: `tox -e unit`
-- **Run integration tests**: `tox -e integration`
-- **Run security checks**: `tox -e security`
-- **Run compliance validation**: `tox -e compliance`
-- **Run MCP server with STDIO transport**: `tox -e start`
-- **Run all checks**: `tox`
+   Available variables:
+   - `PROMPTS_FILE_PATH`: Path to prompts config (default: `resources/prompts.yaml`)
+   - `DEBUG`: Enable debug mode (default: 0)
 
 ### Quick Start
 
-Start the MCP server and integrate with your AI tools:
+Start the MCP server:
 
 ```bash
-# Using Tox (recommended for development)
+# Using Tox (recommended)
 tox -e start
 
 # Direct execution
 python src/app.py
-
-# Using Docker (production-like environment)
-docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
 ```
 
-The server uses STDIO transport for MCP communication.
+Server uses STDIO transport for MCP communication.
 
-## 🛠️ Current Usage
+### Docker Deployment
 
-### Main Entrypoint
+Deploy as a container:
 
-The primary entrypoint is:
-```bash
-python src/app.py
-```
+1. Build the image:
+   ```bash
+   docker build -t ctxfy-mcp:latest .
+   ```
 
-### Configuration
+2. Run with STDIO transport:
+   ```bash
+   docker run -i --rm -v "$PWD:/workspace:rw" ctxfy-mcp:latest
+   ```
 
-Set via environment variables:
-- `DEBUG`: Enable debug mode (default: False)
+3. Using Docker Compose:
+   ```bash
+   docker-compose up ctxfy-mcp
+   ```
+
+## 🧪 Development Commands
+
+Project uses Tox for workflows:
+
+- **Linting**: `tox -e lint`
+- **Formatting**: `tox -e format`
+- **Type checking**: `tox -e type`
+- **Unit tests**: `tox -e unit`
+- **Integration tests**: `tox -e integration`
+- **Security checks**: `tox -e security`
+- **Compliance validation**: `tox -e compliance`
+- **Start server**: `tox -e start`
+- **All checks**: `tox`
 
 ## 🌐 MCP Client Integration
 
-The server communicates via STDIO transport, which is the standard for MCP clients like Claude Code, Cursor, and other AI development tools. Both local and containerized deployments are supported:
-
-### Local Deployment
-1. **Configure your MCP client** to use the STDIO transport with the Ctxfy server executable.
-
-2. **Start the server** using Tox:
-   ```bash
-   tox -e start
-   ```
-
-3. **Or run directly**:
-   ```bash
-   python src/app.py
-   ```
-
-4. **Use MCP tools** in your AI development environment.
-
-### Containerized Deployment
-1. **Build and run the container** with STDIO forwarding:
-   ```bash
-   docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
-   ```
-
-2. **Configure your MCP client** to use the containerized executable with proper volume mounts for file access.
-
-3. **Use MCP tools** in your AI development environment with containerized server.
-
-### Volume Mounting for File Access
-For MCP clients that need to access project files, mount your workspace directory:
-```bash
-docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
-```
+Server communicates via STDIO transport (standard for MCP clients like Claude Code, Cursor). Configure your MCP client to use STDIO transport with Ctxfy server.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make changes following FCIS architectural principles
-4. Write tests using TDD
+1. Fork repository
+2. Create feature branch
+3. Follow FCIS principles
+4. Write tests with TDD
 5. Run quality checks: `tox`
-6. Open a Pull Request
+6. Open Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file.
 
 ## 🐛 Issues
 
-Report issues on our [GitHub Issues](https://github.com/your-username/ctxfy/issues) page. Include Python version, OS, MCP client version, and steps to reproduce.
+Report issues on [GitHub Issues](https://github.com/your-username/ctxfy/issues). Include Python version, OS, MCP client version, and reproduction steps.
