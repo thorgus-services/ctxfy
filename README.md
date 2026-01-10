@@ -84,7 +84,7 @@ The project uses Tox for development workflows:
 - **Run integration tests**: `tox -e integration`
 - **Run security checks**: `tox -e security`
 - **Run compliance validation**: `tox -e compliance`
-- **Run MCP server with STDIO transport**: `tox -e run`
+- **Run MCP server with STDIO transport**: `tox -e start`
 - **Run all checks**: `tox`
 
 ### Quick Start
@@ -93,7 +93,7 @@ Start the MCP server and integrate with your AI tools:
 
 ```bash
 # Using Tox (recommended for development)
-tox -e run
+tox -e start
 
 # Direct execution
 python src/app.py
@@ -138,7 +138,7 @@ The server communicates via STDIO transport, which is the standard for MCP clien
 
 2. **Start the server** using Tox:
    ```bash
-   tox -e run
+   tox -e start
    ```
 
 3. **Or run directly**:
