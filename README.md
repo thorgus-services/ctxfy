@@ -85,9 +85,7 @@ Ctxfy can be deployed as a Docker container for consistent environments and easy
 
 2. **Run the container with STDIO transport:**
    ```bash
-   docker run -i --rm \
-     -v ${PWD}:/workspace:rw \
-     ctxfy-mcp:latest
+   docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
    ```
 
 3. **Using Docker Compose:**
@@ -130,7 +128,7 @@ tox -e start
 python src/app.py
 
 # Using Docker (production-like environment)
-docker run -i --rm ctxfy-mcp:latest
+docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
 ```
 
 The server uses STDIO transport for MCP communication.
@@ -171,9 +169,7 @@ The server communicates via STDIO transport, which is the standard for MCP clien
 ### Containerized Deployment
 1. **Build and run the container** with STDIO forwarding:
    ```bash
-   docker run -i --rm \
-     -v ${PWD}:/workspace:rw \
-     ctxfy-mcp:latest
+   docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
    ```
 
 2. **Configure your MCP client** to use the containerized executable with proper volume mounts for file access.
@@ -183,9 +179,7 @@ The server communicates via STDIO transport, which is the standard for MCP clien
 ### Volume Mounting for File Access
 For MCP clients that need to access project files, mount your workspace directory:
 ```bash
-docker run -i --rm \
-  -v ${PWD}:/workspace:rw \
-  ctxfy-mcp:latest
+docker run -i --rm -v "$PWD:/workspace:rw" -e WORKSPACE_DIR=/workspace ctxfy-mcp:latest
 ```
 
 ## 🤝 Contributing
