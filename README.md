@@ -48,7 +48,8 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
 
 ### Prerequisites
 
-- **Python 3.13+**
+- **Python 3.13+** (for development)
+- **Docker** (for containerized deployment)
 - **Poetry** (dependency manager)
 - **Git**
 
@@ -72,6 +73,38 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
    The following environment variables are available:
    - `PROMPTS_FILE_PATH`: Path to the prompts configuration file (default: `resources/prompts.yaml`)
    - `DEBUG`: Enable debug mode (set to 1 to enable, default: 0)
+
+### Docker Deployment
+
+Ctxfy can be deployed as a Docker container for consistent environments and easy deployment:
+
+1. **Build the Docker image:**
+   ```bash
+   docker build -t ctxfy-mcp:latest .
+   ```
+
+2. **Run the container with STDIO transport:**
+   ```bash
+   docker run -i --rm \
+     -v $(pwd)/workspace:/workspace:rw \
+     -v $(pwd)/config:/config:ro \
+     ctxfy-mcp:latest
+   ```
+
+3. **Using Docker Compose:**
+   ```bash
+   # Set environment variables
+   export WORKSPACE_DIR=$(pwd)/workspace
+   export CONFIG_DIR=$(pwd)/config
+
+   # Start the service
+   docker-compose up ctxfy-mcp
+   ```
+
+4. **Development with Docker Compose:**
+   ```bash
+   docker-compose up --build
+   ```
 
 ## 🧪 Development Commands
 
@@ -97,6 +130,9 @@ tox -e start
 
 # Direct execution
 python src/app.py
+
+# Using Docker (production-like environment)
+docker run -i --rm ctxfy-mcp:latest
 ```
 
 The server uses STDIO transport for MCP communication.
@@ -110,21 +146,6 @@ The primary entrypoint is:
 python src/app.py
 ```
 
-### MCP Integration
-
-The server currently provides the `generate_specification` tool via MCP protocol with STDIO transport:
-```json
-{
-  "name": "generate_specification",
-  "description": "Generates technical specifications from business requirements",
-  "arguments": {
-    "business_requirements": "Describe the feature or system to be specified"
-  }
-}
-```
-
-The `specification_save_instruction` prompt is also available for generating comprehensive technical specifications.
-
 ### Configuration
 
 Set via environment variables:
@@ -132,8 +153,9 @@ Set via environment variables:
 
 ## 🌐 MCP Client Integration
 
-The server communicates via STDIO transport, which is the standard for MCP clients like Claude Code, Cursor, and other AI development tools:
+The server communicates via STDIO transport, which is the standard for MCP clients like Claude Code, Cursor, and other AI development tools. Both local and containerized deployments are supported:
 
+### Local Deployment
 1. **Configure your MCP client** to use the STDIO transport with the Ctxfy server executable.
 
 2. **Start the server** using Tox:
@@ -147,6 +169,28 @@ The server communicates via STDIO transport, which is the standard for MCP clien
    ```
 
 4. **Use MCP tools** in your AI development environment.
+
+### Containerized Deployment
+1. **Build and run the container** with STDIO forwarding:
+   ```bash
+   docker run -i --rm \
+     -v $(pwd)/workspace:/workspace:rw \
+     -v $(pwd)/config:/config:ro \
+     ctxfy-mcp:latest
+   ```
+
+2. **Configure your MCP client** to use the containerized executable with proper volume mounts for file access.
+
+3. **Use MCP tools** in your AI development environment with containerized server.
+
+### Volume Mounting for File Access
+For MCP clients that need to access project files, mount your workspace directory:
+```bash
+docker run -i --rm \
+  -v /path/to/your/project:/workspace:rw \
+  -v /path/to/config:/config:ro \
+  ctxfy-mcp:latest
+```
 
 ## 🤝 Contributing
 

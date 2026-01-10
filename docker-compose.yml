@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  ctxfy-mcp:
+    build: .
+    container_name: ctxfy-mcp-server
+    environment:
+      - PROMPTS_FILE_PATH=/config/prompts.yaml
+      - LOG_LEVEL=INFO
+    volumes:
+      - ${WORKSPACE_DIR:-./workspace}:/workspace:rw
+      - ${CONFIG_DIR:-./config}:/config:ro
+    # STDIO transport is handled via stdin/stdout, so no ports exposed for typical HTTP
+    # The container communicates via STDIO with the MCP client
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    # Health check to verify the service is running properly using file-based status
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ctxfy_health_status.json && cat /tmp/ctxfy_health_status.json | jq -e '.status == \"healthy\"' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s  # Allow more time for startup
+
+  # Health check service to validate container status
+  ctxfy-health:
+    image: curlimages/curl:latest
+    depends_on:
+      - ctxfy-mcp
+    command: ["sh", "-c", "echo 'Health check: ctxfy container running'"]
+    restart: "no"

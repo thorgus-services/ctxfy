@@ -1,0 +1,11 @@
+{
+  "task_id": "ctxfy-20-docker-image",
+  "task_title": "Docker Image Creation",
+  "task_summary": "Create a Docker image for the MCP Server that can run consistently across environments with dependency isolation and standardized client integration. The image should accept environment variable configuration, support file volume mounting, handle STDIO connections, include all necessary dependencies, and securely manage sensitive variables.",
+  "task_type": "development",
+  "domain_keywords": ["docker", "containerization", "mcp-server", "image-building", "dependency-management"],
+  "discovered_skills": [],
+  "context_budget_used": 119,
+  "context_budget_remaining": 1,
+  "fallback_strategy": "proceed_without_skills"
+}

@@ -29,9 +29,8 @@ Skill Metadata: .ctxfy/tasks/{task_id}/skill-discovery.json
 
 4. OUTPUT GENERATION:
    - Generate ONLY the code files specified in PRP deliverables
-   - Include architecture compliance checklist as comment header
    - Add TODO comments for any required human verification points
-   - Format code using Ruff with line-length=88
+   - Make ALL verifications executing tox command
 
 [Critical Constraints]
 - NO deviation from PRP specifications
@@ -43,16 +42,6 @@ Skill Metadata: .ctxfy/tasks/{task_id}/skill-discovery.json
 
 [Output Specification]
 Format: EXACT file structure as specified in PRP
-Validation: Include this checklist at the top of each file:
-"""
-✅ ARCHITECTURE COMPLIANCE CHECK
-- Core functions are pure (no I/O, no mutation) ✓
-- Value objects use @dataclass(frozen=True) ✓
-- Hexagonal Architecture ports follow naming conventions ✓
-- Test distribution follows 70/25/5 ratio ✓
-- Dependencies match project context versions ✓
-- Ruff formatting (line-length=88) ✓
-"""
 
 [Emergency Protocol]
 If unable to complete:

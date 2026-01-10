@@ -1,99 +1,71 @@
-# Dependencies
-poetry.lock
+# Ignore all gitignored files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-.pytest_cache/
-.tox/
-.venv/
-env/
-venv/
-
-# Testing
-.coverage
-.htmlcov/
-.pytest_cache/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
-.git/
-
-# Logs
-logs/
-*.log
-
-# Documentation
-docs/_build/
-*.tmp
+*.py[cod]
+*$py.class
 
 # Distribution / packaging
-.pybuild/
-.coverage
-.tox/
-.sass-cache/
-node_modules/
-npm-debug.log
-yarn.log
-
-# Environment
-.env
-.venv
-venv/
-ENV
-.envrc
-.flaskenv
-
-# Local configuration
-*.ini
-*.cfg
-*.conf
-config/
-
-# Additional Python artifacts
-*.so
-*.egg
-*.egg-info/
- MANIFEST
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
 .installed.cfg
-*.manifest
-*.spec
+*.egg
 
-# Coverage
-.coverage*
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Pytest
+.pytest_cache/
 htmlcov/
+.coverage
+.coverage.*
 
-# Type checking
+# Toolchain
+.ruff_cache/
+.tox/
+
+# Mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
-# CI/CD
-.github/
-.circleci/
-.travis.yml
-.gitlab-ci.yml
-.drone.yml
-azure-pipelines.yml
-jenkinsfile
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Docker
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Local development files
 .dockerignore
-Dockerfile*
+Dockerfile
+docker-compose.yml
 
-# Additional
-*Dockerfile
-*docker-compose*
-*.dockerapp
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
