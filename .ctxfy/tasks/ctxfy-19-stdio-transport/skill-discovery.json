@@ -1,0 +1,11 @@
+{
+  "task_id": "ctxfy-19-stdio-transport",
+  "task_title": "Mudança do Transporte do MCP Server para STDIO",
+  "task_summary": "Change MCP Server communication transport from HTTP to STDIO to enable ctx.read_resource(task_file_uri) functionality to work properly with file system URIs and improve client integration efficiency and reliability.",
+  "task_type": "implementation",
+  "domain_keywords": ["STDIO", "MCP Server", "Transport", "Communication", "URI"],
+  "discovered_skills": [],
+  "context_budget_used": 45,
+  "context_budget_remaining": 75,
+  "fallback_strategy": "proceed_without_skills"
+}

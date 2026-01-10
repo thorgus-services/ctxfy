@@ -8,13 +8,13 @@
 
 **Standardizes and automates developer-AI interaction through the Model Context Protocol (MCP).**
 
-Ctxfy is an enterprise Context Engineering MCP Server that standardizes and automates the interaction between developers and AI agents. Currently focused on technical specification generation from business requirements, with a roadmap to implement the full vision of context engineering. By implementing the Model Context Protocol (MCP) specification, Ctxfy transforms ad-hoc prompts into **repeatable, auditable, and scalable** software development processes.
+Ctxfy is an enterprise Context Engineering MCP Server that standardizes and automates the interaction between developers and AI agents. Currently focused on technical specification generation from business requirements, with a roadmap to implement the full vision of context engineering. By implementing the Model Context Protocol (MCP) specification with STDIO transport, Ctxfy transforms ad-hoc prompts into **repeatable, auditable, and scalable** software development processes.
 
 ## 🚀 Current Features
 
 - **Technical Specification Generation**: AI-powered generation of technical specifications from business requirements
 - **YAML-based Prompt Configuration**: Flexible prompt templates defined in YAML files
-- **MCP Protocol Compliance**: Native integration with LLMs via HTTP transport
+- **MCP Protocol Compliance**: Native integration with LLMs via STDIO transport
 - **Dynamic Prompt Registration**: Automatic registration of prompts from YAML configuration
 - **Functional Core/Imperative Shell Architecture**: Clean separation of business logic and side effects
 
@@ -42,7 +42,7 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
 - **Framework**: FastMCP for Model Context Protocol implementation
 - **Architecture**: Functional Core/Imperative Shell (FCIS) with Ports and Adapters
 - **Tools**: Poetry (dependencies), Ruff (formatting), MyPy (type checking), Tox (testing)
-- **Protocol**: Model Context Protocol (MCP) with HTTP transport
+- **Protocol**: Model Context Protocol (MCP) with STDIO transport
 
 ## 🚀 Getting Started
 
@@ -72,10 +72,6 @@ The architecture is visualized in the [C4 Component Diagram](./docs/ctxfy_archit
    The following environment variables are available:
    - `PROMPTS_FILE_PATH`: Path to the prompts configuration file (default: `resources/prompts.yaml`)
    - `DEBUG`: Enable debug mode (set to 1 to enable, default: 0)
-   - `SERVER_HOST`: Host address for the server (default: `127.0.0.1`)
-   - `SERVER_PORT`: Port number for the server (default: `8000`)
-   - `MCP_TRANSPORT`: Transport protocol for MCP (default: `http`)
-   - `API_KEY`: Optional API key for authentication (if required)
 
 ## 🧪 Development Commands
 
@@ -88,7 +84,7 @@ The project uses Tox for development workflows:
 - **Run integration tests**: `tox -e integration`
 - **Run security checks**: `tox -e security`
 - **Run compliance validation**: `tox -e compliance`
-- **Run development server**: `tox -e serve`
+- **Run MCP server with STDIO transport**: `tox -e run`
 - **Run all checks**: `tox`
 
 ### Quick Start
@@ -97,13 +93,13 @@ Start the MCP server and integrate with your AI tools:
 
 ```bash
 # Using Tox (recommended for development)
-tox -e serve
+tox -e run
 
 # Direct execution
-python -m src.app
+python src/app.py
 ```
 
-The server runs on `http://127.0.0.1:8000` by default.
+The server uses STDIO transport for MCP communication.
 
 ## 🛠️ Current Usage
 
@@ -111,12 +107,12 @@ The server runs on `http://127.0.0.1:8000` by default.
 
 The primary entrypoint is:
 ```bash
-python -m src.app
+python src/app.py
 ```
 
 ### MCP Integration
 
-The server currently provides the `generate_specification` tool via MCP protocol:
+The server currently provides the `generate_specification` tool via MCP protocol with STDIO transport:
 ```json
 {
   "name": "generate_specification",
@@ -133,37 +129,24 @@ The `specification_save_instruction` prompt is also available for generating com
 
 Set via environment variables:
 - `DEBUG`: Enable debug mode (default: False)
-- `SERVER_HOST`: Host address (default: 127.0.0.1)
-- `SERVER_PORT`: Port (default: 8000)
-- `MCP_TRANSPORT`: Transport protocol (default: http)
 
-## 🌐 Qwen Code Integration
+## 🌐 MCP Client Integration
 
-1. **Install Qwen Code extension** in VS Code.
+The server communicates via STDIO transport, which is the standard for MCP clients like Claude Code, Cursor, and other AI development tools:
 
-2. **Copy the example configuration** from `examples/qwen-config.json` to your workspace or user settings:
-   ```json
-   {
-     "mcpServers": {
-       "context-engineering": {
-         "httpUrl": "http://127.0.0.1:8000/mcp",  // MCP protocol endpoint
-         "headers": {
-           "Content-Type": "application/json",
-           "Authorization": "Bearer YOUR_API_KEY_HERE"  // Replace with your actual API key
-         },
-         "timeout": 30000,
-         "trust": false
-       }
-     }
-   }
-   ```
+1. **Configure your MCP client** to use the STDIO transport with the Ctxfy server executable.
 
-3. **Start the server** using Tox:
+2. **Start the server** using Tox:
    ```bash
-   tox -e serve
+   tox -e run
    ```
 
-4. **Use MCP tools** in Qwen Code interface.
+3. **Or run directly**:
+   ```bash
+   python src/app.py
+   ```
+
+4. **Use MCP tools** in your AI development environment.
 
 ## 🤝 Contributing
 

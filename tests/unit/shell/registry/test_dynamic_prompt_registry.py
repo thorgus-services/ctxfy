@@ -1,13 +1,11 @@
-import inspect
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from unittest.mock import Mock, PropertyMock, patch
+
 import pytest
-import asyncio
+from fastmcp import Context, FastMCP
 
-from fastmcp import FastMCP, Context
-
-from src.shell.registry.dynamic_prompt_registry import DynamicPromptRegistry
 from src.core.models.specification_result import SaveDirectoryPath
 from src.core.models.specification_workflow import BusinessRequirements
+from src.shell.registry.dynamic_prompt_registry import DynamicPromptRegistry
 
 
 class TestDynamicPromptRegistry:
@@ -150,9 +148,9 @@ class TestDynamicPromptRegistry:
         assert 'name' in sig.parameters
         
         annotations = func.__annotations__
-        assert annotations['ctx'] == Context  # Fixed: use Context from fastmcp
-        assert annotations['return'] == str
-        assert annotations['name'] == str
+        assert annotations['ctx'] is Context  # Fixed: use Context from fastmcp
+        assert annotations['return'] is str
+        assert annotations['name'] is str
 
     @pytest.mark.asyncio
     async def test_create_prompt_implementation_with_args(self):
@@ -312,14 +310,14 @@ class TestDynamicPromptRegistry:
         assert 'optional_int' in sig.parameters
         
         # Check types
-        assert sig.parameters['name'].annotation == str
-        assert sig.parameters['count'].annotation == int
-        assert sig.parameters['rate'].annotation == float
-        assert sig.parameters['active'].annotation == bool
-        assert sig.parameters['path'].annotation == SaveDirectoryPath
-        assert sig.parameters['requirements'].annotation == BusinessRequirements
-        assert sig.parameters['optional_str'].annotation == str
-        assert sig.parameters['optional_int'].annotation == int
+        assert sig.parameters['name'].annotation is str
+        assert sig.parameters['count'].annotation is int
+        assert sig.parameters['rate'].annotation is float
+        assert sig.parameters['active'].annotation is bool
+        assert sig.parameters['path'].annotation is SaveDirectoryPath
+        assert sig.parameters['requirements'].annotation is BusinessRequirements
+        assert sig.parameters['optional_str'].annotation is str
+        assert sig.parameters['optional_int'].annotation is int
         
         # Check defaults
         assert sig.parameters['optional_str'].default == 'default_value'
@@ -341,14 +339,14 @@ class TestDynamicPromptRegistry:
         annotations = registry._build_annotations(parameters)
         
         # Check that all annotations are present
-        assert annotations['ctx'] == Context  # Fixed: use Context from fastmcp
-        assert annotations['return'] == str
-        assert annotations['name'] == str
-        assert annotations['count'] == int
-        assert annotations['rate'] == float
-        assert annotations['active'] == bool
-        assert annotations['path'] == SaveDirectoryPath
-        assert annotations['requirements'] == BusinessRequirements
+        assert annotations['ctx'] is Context  # Fixed: use Context from fastmcp
+        assert annotations['return'] is str
+        assert annotations['name'] is str
+        assert annotations['count'] is int
+        assert annotations['rate'] is float
+        assert annotations['active'] is bool
+        assert annotations['path'] is SaveDirectoryPath
+        assert annotations['requirements'] is BusinessRequirements
 
     def test_build_signature_with_invalid_default_conversion(self):
         """Test the _build_signature method handles invalid default value conversions."""

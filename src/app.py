@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from .shell.orchestrators.mcp_orchestrator import MCPOrchestrator
+from src.shell.orchestrators.mcp_orchestrator import MCPOrchestrator
 
 
 def create_mcp_server() -> FastMCP:
@@ -13,5 +13,13 @@ def create_mcp_server() -> FastMCP:
 
     return mcp
 
+
 mcp_server = create_mcp_server()
-app = mcp_server.http_app()
+
+
+def run_stdio_server() -> None:
+    mcp_server.run()
+
+
+if __name__ == "__main__":
+    run_stdio_server()
