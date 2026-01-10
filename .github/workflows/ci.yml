@@ -33,8 +33,25 @@ jobs:
     - name: Install dependencies with dev group
       run: poetry install --with dev --no-interaction
 
-    - name: Run all validations with Tox
-      run: poetry run tox
+    - name: Run lint validation with Tox
+      run: poetry run tox -e lint
+
+    - name: Run type validation with Tox
+      run: poetry run tox -e type
+
+    - name: Run unit tests with Tox
+      run: poetry run tox -e unit
+
+    - name: Run integration tests with Tox
+      run: poetry run tox -e integration
+
+    - name: Run compliance validation with Tox
+      run: poetry run tox -e compliance
+
+    - name: Check for vulnerabilities using Safety
+      uses: pyupio/safety-action@v1
+      with:
+        api-key: ${{ secrets.SAFETY_API_KEY }}
 
     - name: Build Package
       run: poetry build
