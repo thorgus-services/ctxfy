@@ -55,6 +55,9 @@ COPY pyproject.toml ./
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
 
+# Create workspace directory with appropriate permissions
+RUN mkdir -p /workspace && chown -R appuser:appuser /workspace
+
 # Switch to non-root user
 USER appuser
 

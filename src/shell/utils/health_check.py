@@ -56,8 +56,8 @@ def perform_health_checks() -> Dict[str, str]:
     checks = {}
 
     try:
-        config_path = os.environ.get('PROMPTS_FILE_PATH', 'resources/prompts.yaml')
-        checks["dependencies"] = "ok" if os.path.exists(config_path) else "missing_config"
+        prompt_path = os.environ.get('PROMPTS_FILE_PATH', 'resources/prompts.yaml')
+        checks["dependencies"] = "ok" if os.path.exists(prompt_path) else "missing_prompts"
     except Exception as e:
         checks["dependencies"] = f"error: {str(e)}"
 
@@ -93,7 +93,7 @@ def perform_health_checks() -> Dict[str, str]:
         checks["shell_import"] = f"error: {str(e)}"
 
     try:
-        workspace_dir = os.environ.get('WORKSPACE_DIR', './workspace')
+        workspace_dir = os.environ.get('WORKSPACE_DIR', '/workspace')
         checks["workspace_access"] = "ok" if os.path.exists(workspace_dir) else "workspace_missing"
     except Exception as e:
         checks["workspace_access"] = f"error: {str(e)}"

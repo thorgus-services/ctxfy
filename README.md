@@ -86,8 +86,7 @@ Ctxfy can be deployed as a Docker container for consistent environments and easy
 2. **Run the container with STDIO transport:**
    ```bash
    docker run -i --rm \
-     -v $(pwd)/workspace:/workspace:rw \
-     -v $(pwd)/config:/config:ro \
+     -v ${PWD}:/workspace:rw \
      ctxfy-mcp:latest
    ```
 
@@ -95,7 +94,6 @@ Ctxfy can be deployed as a Docker container for consistent environments and easy
    ```bash
    # Set environment variables
    export WORKSPACE_DIR=$(pwd)/workspace
-   export CONFIG_DIR=$(pwd)/config
 
    # Start the service
    docker-compose up ctxfy-mcp
@@ -174,8 +172,7 @@ The server communicates via STDIO transport, which is the standard for MCP clien
 1. **Build and run the container** with STDIO forwarding:
    ```bash
    docker run -i --rm \
-     -v $(pwd)/workspace:/workspace:rw \
-     -v $(pwd)/config:/config:ro \
+     -v ${PWD}:/workspace:rw \
      ctxfy-mcp:latest
    ```
 
@@ -187,8 +184,7 @@ The server communicates via STDIO transport, which is the standard for MCP clien
 For MCP clients that need to access project files, mount your workspace directory:
 ```bash
 docker run -i --rm \
-  -v /path/to/your/project:/workspace:rw \
-  -v /path/to/config:/config:ro \
+  -v ${PWD}:/workspace:rw \
   ctxfy-mcp:latest
 ```
 

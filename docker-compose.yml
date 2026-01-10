@@ -5,11 +5,11 @@ services:
     build: .
     container_name: ctxfy-mcp-server
     environment:
-      - PROMPTS_FILE_PATH=/config/prompts.yaml
+      - PROMPTS_FILE_PATH=resources/prompts.yaml
       - LOG_LEVEL=INFO
+      - WORKSPACE_DIR=/workspace
     volumes:
-      - ${WORKSPACE_DIR:-./workspace}:/workspace:rw
-      - ${CONFIG_DIR:-./config}:/config:ro
+      - ${PWD}:/workspace:rw
     # STDIO transport is handled via stdin/stdout, so no ports exposed for typical HTTP
     # The container communicates via STDIO with the MCP client
     stdin_open: true
