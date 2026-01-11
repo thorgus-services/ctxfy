@@ -51,6 +51,3 @@ dmypy.json
 .env
 .env.local
 .env.*.local
-
-# Poetry
-poetry.lock
