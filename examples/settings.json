@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ctxfyServer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "${PWD}:/workspace:rw",
+        "ghcr.io/thorgus-services/ctxfy:0.0.1-beta"
+      ]
+    }
+  }
+}
