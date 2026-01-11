@@ -1,18 +1,17 @@
 {
-  "task_id": "task_1736282766_a1b2c3",
+  "task_id": "ctxfy-18-recieving-task",
   "task_title": "Task Reception and Processing",
-  "task_summary": "Process markdown task files via MCP server. Implement `process_task` tool to read content from URI, generate unique task_id, and return structured data. Create `setup_context_engineering` prompt with clear LLM instructions for environment setup. Follow SMART criteria with specific, measurable, achievable, relevant, and time-bound requirements.",
-  "task_type": "tool-implementation",
-  "domain_keywords": ["markdown-processing", "task-processing", "uri-handling", "context-engineering", "mcp-server"],
+  "task_summary": "Receiving and processing markdown files containing user stories or tasks, organizing directory structures, and initiating automated Context Engineering workflows.",
+  "task_type": "server-tool-implementation",
+  "domain_keywords": ["markdown-processing", "file-operations", "task-management", "context-engineering", "automation"],
   "discovered_skills": [
     {
       "name": "markdown-processing",
-      "path": "/Users/fernandojr/Projects/ctxfy/.ctxfy/skills/markdown-processing/SKILL.md",
-      "score": 90,
-      "reason": "Directly relevant for processing markdown files which is the core requirement of the task"
+      "score": 85,
+      "reason": "Directly relevant for processing markdown files containing user stories or tasks"
     }
   ],
-  "context_budget_used": 94,
-  "context_budget_remaining": 26,
+  "context_budget_used": 85,
+  "context_budget_remaining": 35,
   "fallback_strategy": "proceed_without_skills"
 }
