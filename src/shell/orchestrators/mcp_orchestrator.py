@@ -1,6 +1,8 @@
 from fastmcp import FastMCP
 
 from src.core.use_cases.generate_specification import GenerateSpecificationUseCase
+from src.core.use_cases.process_task_use_case import ProcessTaskUseCase
+from src.shell.adapters.tools.process_task_tool import ProcessTaskTool
 from src.shell.adapters.tools.specification_generation_tool import (
     SpecificationGenerationTool,
 )
@@ -18,9 +20,16 @@ class MCPOrchestrator:
         self._setup_prompts()
 
     def _setup_tools(self) -> None:
-        use_case = GenerateSpecificationUseCase()
-        tool = SpecificationGenerationTool(use_case=use_case)
-        tool_registry.register_tool("generate_specification", tool)
+        # Register specification generation tool
+        spec_use_case = GenerateSpecificationUseCase()
+        spec_tool = SpecificationGenerationTool(use_case=spec_use_case)
+        tool_registry.register_tool("generate_specification", spec_tool)
+
+        # Register process task tool
+        task_use_case = ProcessTaskUseCase()
+        task_tool = ProcessTaskTool(use_case=task_use_case)
+        tool_registry.register_tool("process_task", task_tool)
+
         tool_registry.register_all_to_mcp(self.mcp)
 
     def _setup_prompts(self) -> None:

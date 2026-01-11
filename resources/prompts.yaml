@@ -55,6 +55,35 @@ prompts:
         - "save"
         - "technical-architecture"
 
+  setup_context_engineering:
+    name: "Setup Context Engineering Workflow"
+    description: "A prompt for initiating the Context Engineering workflow by providing a task file path"
+    template: |
+      You are a specialized agent in Context Engineering. Your task is to initiate
+      the Context Engineering workflow by processing the provided task file.
+
+      Steps to follow:
+
+      1. Use the tool 'process_task' with the file path: {task_file_path}
+
+      2. Wait for the server to process the file and create the necessary directory structure.
+
+      3. Confirm to the user that the task has been processed successfully and provide the task ID.
+
+      Important: Do not attempt to create directories or save files manually. The server handles all file operations automatically.
+    parameters:
+      - name: "task_file_path"
+        type: "str"
+        description: "Path to the markdown file containing the task or user story"
+    metadata:
+      category: "context-engineering"
+      version: "1.0"
+      tags:
+        - "setup"
+        - "workflow"
+        - "task-processing"
+        - "context"
+
   # Example of how a future prompt could be added without code changes:
   # code_generation:
   #   name: "Code Generation Prompt"
